@@ -2,7 +2,7 @@
 
 A guided interview and documentation generation tool that helps product teams articulate their product vision through a structured Q&A process, automatic analysis, and multi-language document generation.
 
-## 🎯 Overview
+## Overview
 
 Product Clarity Workspace streamlines the product definition process by:
 - **Guided Interview**: Step-by-step questions to capture product insights
@@ -12,7 +12,7 @@ Product Clarity Workspace streamlines the product definition process by:
 - **Export Options**: Export to Markdown, DOCX, or PDF formats
 - **Provenance Tracking**: See which answers informed each insight with hover tooltips
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+ and npm
@@ -74,7 +74,7 @@ npm run dev
 
 Then open **http://localhost:5173** in your browser.
 
-## 📖 How to Use
+## How to Use
 
 ### 1. Start the Interview
 - The app loads with a guided interview panel on the left
@@ -105,7 +105,7 @@ Then open **http://localhost:5173** in your browser.
   - **Word (.docx)**: Coming soon
   - **PDF (.pdf)**: Coming soon
 
-## ✨ Features
+## Features
 
 ### Guided Interview
 - **Smart Question Flow**: Questions adapt based on your answers
@@ -135,7 +135,7 @@ Then open **http://localhost:5173** in your browser.
 - **Secure**: XSS protection with HTML sanitization
 - **Dev Logging**: Performance metrics in browser console (dev mode only)
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 FortunePlanner/
@@ -165,7 +165,7 @@ FortunePlanner/
 - **Styling**: Tailwind CSS
 - **Storage**: localStorage for session persistence
 
-## 🔧 Development
+## Development
 
 ### Frontend Development
 ```bash
@@ -198,7 +198,7 @@ npm start            # Run compiled JavaScript
 2. Add to `index.json` with `locale` field
 3. Add language option to preview panel dropdown
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Frontend won't start
 - Check Node version: `node --version` (should be 18+)
@@ -225,7 +225,7 @@ npm start            # Run compiled JavaScript
 - Use Markdown export which is fully functional
 - Check browser console for export errors
 
-## 📝 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -249,18 +249,18 @@ ALLOWED_ORIGINS=http://localhost:5173
 
 **Adjust Performance Targets**: See `src/utils/perfMonitor.ts`
 
-## 🔐 Security
+## Security
 
 - **API Key Safety**: OpenAI key never exposed to frontend
 - **XSS Protection**: All user input sanitized before rendering
 - **CORS**: Backend only accepts requests from allowed origins
 - **No External Calls**: All data stays on your machine except OpenAI API calls
 
-## 📄 License
+## License
 
-This project is proprietary software for Fortune Planner.
+This project is not proprietary software. 
 
-## 🤝 Contributing
+## Contributing
 
 For internal development only. See development guide above.
 
