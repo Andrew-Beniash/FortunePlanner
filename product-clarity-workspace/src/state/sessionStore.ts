@@ -63,6 +63,10 @@ export interface SessionState {
   isInterviewComplete: boolean
   completedAt: string | null
 
+  // Analysis State
+  isAnalyzing: boolean
+  lastAnalysisAt: string | null
+
   // Guided Interview State
   currentQuestionId: string | null
   completedQuestionIds: string[]
@@ -104,6 +108,7 @@ export interface SessionState {
    * - Interview not completed
    */
   resetSessionToDefault: () => void
+  runFullAnalysis: () => Promise<void>
   completeInterview: () => void
 
   // Validation / Computed
@@ -207,6 +212,8 @@ export const useSessionStore = create<SessionState>((set, get) => {
     outputLanguage: persistedState.outputLanguage || 'en',
     isInterviewComplete: persistedState.isInterviewComplete || false,
     completedAt: persistedState.completedAt || null,
+    isAnalyzing: false, // Never persist analyzing state
+    lastAnalysisAt: persistedState.lastAnalysisAt || null,
     timestamp: persistedState.timestamp || initialTimestamp,
 
     lastModifiedAt: initialTimestamp,
@@ -413,6 +420,45 @@ export const useSessionStore = create<SessionState>((set, get) => {
         lastModifiedAt: now,
         lastSavedAt: null
       })
+    },
+
+    /**
+     * Run full analysis pipeline
+     * Triggers all analyzers and updates derived inferences
+     */
+    runFullAnalysis: async () => {
+      set({ isAnalyzing: true })
+
+      try {
+        const session = get()
+
+        // Dynamically import to avoid circular dependencies
+        const { runAnalysis } = await import('../engine/analysisEngine')
+
+        // Run the full analysis
+        const analysis = await runAnalysis(session)
+
+        // Update store with results
+        set({
+          derivedInferences: {
+            painPoints: analysis.inferences.painPoints || [],
+            personas: analysis.inferences.personas || [],
+            marketSizing: analysis.inferences.marketSizing || [],
+            viability: analysis.inferences.viability || [],
+            risks: [], // Will be populated by future risk analyzer
+            assumptions: [] // Will be populated by future assumptions analyzer
+          },
+          gaps: analysis.gaps,
+          contradictions: analysis.contradictions,
+          lastAnalysisAt: new Date().toISOString(),
+          lastModifiedAt: new Date().toISOString(),
+          isAnalyzing: false
+        })
+      } catch (err) {
+        console.error('[Session Store] Analysis failed:', err)
+        // Keep previous results on error, just clear analyzing flag
+        set({ isAnalyzing: false })
+      }
     },
 
     completeInterview: () => {

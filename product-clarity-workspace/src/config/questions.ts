@@ -1,6 +1,36 @@
 import type { Question } from './types'
 
+// In-memory override for custom questions
+let overrideQuestions: Question[] | null = null
+
+/**
+ * Set custom questions override
+ * Allows users to upload and use custom questions without modifying files
+ */
+export function setQuestionsOverride(questions: Question[] | null) {
+  overrideQuestions = questions
+}
+
+/**
+ * Get current questions override if set
+ */
+export function getQuestionsOverride(): Question[] | null {
+  return overrideQuestions
+}
+
+let cachedQuestions: Question[] | null = null
+
 export async function loadQuestions(): Promise<Question[]> {
+  // Return override if present
+  if (overrideQuestions) {
+    return overrideQuestions
+  }
+
+  // Use cache if available
+  if (cachedQuestions) {
+    return cachedQuestions
+  }
+
   try {
     const response = await fetch('/config/questions.json')
     if (!response.ok) {
@@ -14,7 +44,7 @@ export async function loadQuestions(): Promise<Question[]> {
     }
 
     // Optional: More rigorous schema validation could go here
-
+    cachedQuestions = questions as Question[]
     return questions as Question[]
   } catch (err) {
     console.error('[Product Clarity] Failed to load questions config:', err)
