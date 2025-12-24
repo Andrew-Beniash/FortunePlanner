@@ -1,9 +1,29 @@
+import { useEffect } from 'react'
 import { useSessionStore } from './state/sessionStore'
-import GuidedInterviewPanel from './components/GuidedInterviewPanel'
-import DocumentationPreviewPanel from './components/DocumentationPreviewPanel'
+import { GuidedInterviewPanel } from './components/interview'
+import { DocumentationPreviewPanel } from './components/preview'
 
 function App() {
   const sessionId = useSessionStore((state) => state.sessionId)
+  const saveActiveSession = useSessionStore((state) => state.saveActiveSession)
+
+  // Auto-save loop (10s) + save on exit
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      saveActiveSession()
+    }, 10_000)
+
+    const handleUnload = () => {
+      saveActiveSession()
+    }
+
+    window.addEventListener('beforeunload', handleUnload)
+
+    return () => {
+      clearInterval(intervalId)
+      window.removeEventListener('beforeunload', handleUnload)
+    }
+  }, [saveActiveSession])
 
   return (
     <div className="h-screen w-screen bg-slate-900 text-slate-100 flex flex-col md:flex-row font-sans overflow-hidden">
