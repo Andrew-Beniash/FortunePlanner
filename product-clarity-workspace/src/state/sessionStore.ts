@@ -9,8 +9,11 @@ export interface RawAnswer {
   timestamp: string // ISO string
 }
 
+import type { PainPoint } from '../analyzers/types'
+
 export interface DerivedInferences {
-  painPoints: any[]
+  painPoints: PainPoint[]
+  // ... other inferences
   personas: any[]
   risks: any[]
   assumptions: any[]

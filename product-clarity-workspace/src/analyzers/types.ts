@@ -1,11 +1,31 @@
-import { SessionState, DerivedInferences, Gap, Contradiction } from '../state/sessionStore'
+import type { SessionState } from '../state/sessionStore'
 
-export interface AnalyzerResult {
+// Domain Types
+export interface PainPoint {
   id: string
-  type: 'inference' | 'gap' | 'contradiction'
-  content: any
-  confidence: 'high' | 'medium' | 'low'
-  provenance: string[] // question IDs
+  description: string
+  severity: 'low' | 'medium' | 'high'
+  segments?: string[]
+  notes?: string
 }
 
-export type AnalyzerFunction = (session: SessionState) => AnalyzerResult[]
+export interface Provenance {
+  source: 'userInput' | 'template' | 'inference'
+  references: string[] // IDs of questions/docs used
+  assumptions: string[]
+}
+
+export interface AnalyzerOutput {
+  type: string
+  data: any
+  provenance: Provenance
+}
+
+export interface AnalyzerResult {
+  analyzerId: string
+  confidence: 'high' | 'medium' | 'low'
+  outputs: AnalyzerOutput[]
+  warnings: string[]
+}
+
+export type AnalyzerFunction = (session: SessionState) => AnalyzerResult
