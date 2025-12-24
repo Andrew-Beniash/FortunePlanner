@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import OpenAI from 'openai'
+import viabilityRouter from './routes/viabilityRouter'
 import type { AnalyzeRequest, AnalyzeResponse, TranslateRequest, TranslateResponse, HealthResponse } from './types'
 
 const app = express()
@@ -19,6 +20,9 @@ app.use(express.json())
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
+
+// Mount routers
+app.use('/api/analyze', viabilityRouter)
 
 // Health check endpoint
 app.get('/health', async (req, res) => {

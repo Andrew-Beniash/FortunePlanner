@@ -1,78 +1,85 @@
 import type { SessionState } from '../state/sessionStore'
-import type { AnalyzerResult, ViabilityAssessment, AnalyzerOutput } from './types'
-import { loadQuestions } from '../config/questions'
-import type { Question } from '../config/types'
+import type { AnalyzerResult, ViabilityAssessment } from './types'
+import { analyzeViability } from '../api/openaiClient'
 
-let cachedQuestions: Record<string, Question> | null = null
-
-async function getQuestionsMap(): Promise<Record<string, Question>> {
-  if (cachedQuestions) return cachedQuestions
-  const questions = await loadQuestions()
-  cachedQuestions = questions.reduce((acc, q) => ({ ...acc, [q.id]: q }), {} as Record<string, Question>)
-  return cachedQuestions
+/**
+ * Extract relevant answers for viability analysis
+ */
+function extractRelevantAnswers(rawAnswers: Record<string, any>): Record<string, any> {
+  // Include all answers for comprehensive analysis
+  // The backend will filter/format as needed
+  return rawAnswers
 }
 
+/**
+ * Viability Analyzer
+ * Uses OpenAI to assess product feasibility, risks, and constraints
+ */
 export async function runViabilityAnalyzer(session: SessionState): Promise<AnalyzerResult> {
-  const questionsMap = await getQuestionsMap()
-  const outputs: AnalyzerOutput[] = []
+  try {
+    // Extract answers
+    const answers = extractRelevantAnswers(session.rawAnswers)
 
-  const constraints: string[] = []
-  let riskScore = 0
-
-  const contributingQIds: string[] = []
-
-  // Scan for viability signals
-  for (const [qId, rawAnswer] of Object.entries(session.rawAnswers)) {
-    const question = questionsMap[qId]
-    if (!question || !rawAnswer?.value) continue
-
-    const category = question.category.toLowerCase()
-
-    if (category.includes('solution') || category.includes('viability') || category.includes('team')) {
-      const val = String(rawAnswer.value).toLowerCase()
-      contributingQIds.push(qId)
-
-      // Heuristic Logic
-      if (val.includes('small team') || val.includes('no budget')) {
-        constraints.push(rawAnswer.value as string)
-        riskScore += 2
+    // Skip if no substantial answers
+    if (Object.keys(answers).length === 0) {
+      return {
+        analyzerId: 'viabilityAnalyzer',
+        confidence: 0,
+        outputs: []
       }
+    }
 
-      if (question.inputType === 'select') {
-        if (val === 'high' && question.text.includes('difficulty')) {
-          riskScore += 3
+    console.log('[Viability Analyzer] Calling OpenAI for session:', session.sessionId)
+
+    // Call OpenAI backend
+    const aiResult = await analyzeViability({
+      sessionId: session.sessionId,
+      blueprintId: session.blueprintId || 'default',
+      answers
+    })
+
+    console.log('[Viability Analyzer] Received analysis:', {
+      feasibility: aiResult.feasibility,
+      risk: aiResult.overallRisk,
+      constraints: aiResult.keyConstraints.length
+    })
+
+    // Map to ViabilityAssessment
+    const viability: ViabilityAssessment = {
+      feasibility: aiResult.feasibility,
+      overallRisk: aiResult.overallRisk,
+      keyConstraints: aiResult.keyConstraints,
+      notes: aiResult.assumptions.join('; ')
+    }
+
+    return {
+      analyzerId: 'viabilityAnalyzer',
+      confidence: 0.85, // High confidence in GPT-4 analysis
+      outputs: [{
+        type: 'viabilityAssessment',
+        data: viability,
+        provenance: {
+          source: 'inference',
+          assumptions: aiResult.assumptions,
+          references: Object.keys(answers)
         }
+      }],
+      // Store suggestions for potential needs_clarification mapping
+      metadata: {
+        suggestedFollowUpQuestions: aiResult.suggestedFollowUpQuestions
       }
     }
-  }
+  } catch (error) {
+    console.error('[Viability Analyzer] Error:', error)
 
-  // Determine feasibility based on score
-  let feasibility: 'low' | 'medium' | 'high' = 'high'
-  if (riskScore > 5) feasibility = 'low'
-  else if (riskScore > 2) feasibility = 'medium'
-
-  const assessment: ViabilityAssessment = {
-    id: `va_${Date.now()}`,
-    feasibility,
-    keyConstraints: constraints,
-    overallRisk: riskScore > 5 ? 'high' : (riskScore > 2 ? 'medium' : 'low'),
-    notes: `Calculated risk score: ${riskScore}`
-  }
-
-  outputs.push({
-    type: 'viabilityAssessment',
-    data: assessment,
-    provenance: {
-      source: 'userInput',
-      references: contributingQIds,
-      assumptions: []
+    // Return empty result on error - don't break the flow
+    return {
+      analyzerId: 'viabilityAnalyzer',
+      confidence: 0,
+      outputs: [],
+      metadata: {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     }
-  })
-
-  return {
-    analyzerId: 'viabilityAnalyzer',
-    confidence: 'medium',
-    outputs,
-    warnings: []
   }
 }
