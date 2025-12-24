@@ -16,8 +16,10 @@ export interface Question {
   helpText?: string
   validationRules?: ValidationRules
   conditionalLogic?: {
-    dependsOn: string
-    showIfValue: any
+    dependsOn?: string // Deprecated, mapped to showIf
+    showIfValue?: any // Deprecated
+    showIf?: { questionId: string; value: any }
+    hideIf?: { questionId: string; value: any }
   }
 }
 

@@ -3,6 +3,7 @@ import { useSessionStore } from '../../state/sessionStore'
 import { loadQuestions } from '../../config/questions'
 import { loadBlueprints } from '../../config/blueprints'
 import { validateAnswer } from '../../engine/validation'
+import { isQuestionVisible } from '../../engine/visibility'
 import type { Question, Blueprint } from '../../config/types'
 
 export default function GuidedInterviewPanel() {
@@ -36,11 +37,15 @@ export default function GuidedInterviewPanel() {
     init()
   }, [])
 
-  // Flatten Sections to Linear Sequence
+  // Flatten Sections to Linear Sequence & Filter by Visibility
   const questionSequence = useMemo(() => {
     if (!activeBlueprint) return []
-    return activeBlueprint.sections.flatMap(s => s.questionIds)
-  }, [activeBlueprint])
+    const allIds = activeBlueprint.sections.flatMap(s => s.questionIds)
+    return allIds.filter(id => {
+      const q = questions[id]
+      return q && isQuestionVisible(q, rawAnswers)
+    })
+  }, [activeBlueprint, questions, rawAnswers])
 
   // Initialize first question if needed
   useEffect(() => {
@@ -183,8 +188,8 @@ export default function GuidedInterviewPanel() {
             onClick={handleBack}
             disabled={isFirst}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isFirst
-                ? 'text-slate-600 cursor-not-allowed'
-                : 'text-slate-300 hover:bg-slate-700'
+              ? 'text-slate-600 cursor-not-allowed'
+              : 'text-slate-300 hover:bg-slate-700'
               }`}
           >
             ← Back
@@ -201,8 +206,8 @@ export default function GuidedInterviewPanel() {
               onClick={handleNext}
               disabled={isRequired && !isValid}
               className={`px-6 py-2 rounded-lg text-sm font-bold shadow-lg transition-all transform active:scale-95 ${isRequired && !isValid
-                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none'
-                  : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20'
+                ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none'
+                : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20'
                 }`}
             >
               {isLast ? 'Finish' : 'Next →'}

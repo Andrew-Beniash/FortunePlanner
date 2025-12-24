@@ -109,6 +109,8 @@ export function validateAnswer(question: Question, rawAnswer: RawAnswer | undefi
   return errors
 }
 
+import { isQuestionVisible } from './visibility'
+
 export async function validateSession(session: SessionState): Promise<ValidationSummary> {
   const [questions, blueprints] = await Promise.all([loadQuestions(), loadBlueprints()])
 
@@ -118,15 +120,20 @@ export async function validateSession(session: SessionState): Promise<Validation
   // Determine active questions from blueprint
   // Fallback to first blueprint if ID not matched, or handle gracefully
   const activeBlueprint = blueprints.find(b => b.id === session.blueprintId) || blueprints[0]
-  const activeQuestionIds = activeBlueprint ? activeBlueprint.sections.flatMap(s => s.questionIds) : []
+  const allQuestionIds = activeBlueprint ? activeBlueprint.sections.flatMap(s => s.questionIds) : []
 
   const errors: ValidationError[] = []
   const gaps: Gap[] = []
 
-  // Iterate over active questions
-  for (const qId of activeQuestionIds) {
+  // Iterate over active visible questions
+  for (const qId of allQuestionIds) {
     const question = questionMap[qId]
     if (!question) continue
+
+    // Skip hidden questions
+    if (!isQuestionVisible(question, session.rawAnswers)) {
+      continue
+    }
 
     const answer = session.rawAnswers[qId]
     const qErrors = validateAnswer(question, answer)
