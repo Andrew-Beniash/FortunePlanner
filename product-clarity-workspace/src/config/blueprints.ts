@@ -1,17 +1,20 @@
 import type { Blueprint } from './types'
 
-const MOCK_BLUEPRINT: Blueprint = {
-  id: 'bp_standard_v1',
-  version: '1.0.0',
-  name: 'Standard Product Clarity',
-  description: 'The default guided interview flow.',
-  sections: [
-    { id: 'problem', title: 'Problem Space', questionIds: ['q1'] },
-    { id: 'persona', title: 'Target Audience', questionIds: ['q2'] },
-    { id: 'strategy', title: 'Strategic Fit', questionIds: ['q3', 'q4', 'q5'] }
-  ]
-}
-
 export async function loadBlueprints(): Promise<Blueprint[]> {
-  return Promise.resolve([MOCK_BLUEPRINT])
+  try {
+    const response = await fetch('/config/blueprints.json')
+    if (!response.ok) {
+      throw new Error(`Failed to load blueprints: ${response.statusText}`)
+    }
+    const blueprints = await response.json()
+
+    if (!Array.isArray(blueprints)) {
+      throw new Error('Blueprints config must be an array')
+    }
+
+    return blueprints as Blueprint[]
+  } catch (err) {
+    console.error('[Product Clarity] Failed to load blueprints config:', err)
+    return []
+  }
 }
