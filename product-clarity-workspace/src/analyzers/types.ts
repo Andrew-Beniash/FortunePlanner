@@ -9,6 +9,16 @@ export interface PainPoint {
   notes?: string
 }
 
+export interface Persona {
+  id: string
+  label: string
+  description: string
+  role?: string
+  industry?: string
+  segment?: string
+  notes?: string
+}
+
 export interface Provenance {
   source: 'userInput' | 'template' | 'inference'
   references: string[] // IDs of questions/docs used
