@@ -19,6 +19,8 @@ export default function GuidedInterviewPanel() {
   const goToPreviousQuestion = useSessionStore((state) => state.goToPreviousQuestion)
   const skipCurrentQuestion = useSessionStore((state) => state.skipCurrentQuestion)
   const setCurrentQuestion = useSessionStore((state) => state.setCurrentQuestion)
+  const completeInterview = useSessionStore((state) => state.completeInterview)
+  const isInterviewComplete = useSessionStore((state) => state.isInterviewComplete)
 
   // Load Config on Mount
   useEffect(() => {
@@ -81,13 +83,35 @@ export default function GuidedInterviewPanel() {
     // Block if required and invalid (and user has interacted or it's empty)
     // For smoother UX, we might allow check on click
     if (!isValid && isRequired) {
-      // Logic to show touched state could go here, for now we rely on explicit errors
       return
     }
+
+    if (isLast) {
+      completeInterview()
+      return
+    }
+
     goToNextQuestion(questionSequence)
   }
   const handleBack = () => goToPreviousQuestion(questionSequence)
   const handleSkip = () => skipCurrentQuestion(questionSequence)
+
+  if (isInterviewComplete) {
+    return (
+      <div className="flex flex-col h-full bg-slate-900 p-8">
+        <div className="bg-green-900/30 border border-green-700 rounded-lg p-8 text-center max-w-2xl mx-auto mt-20">
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className="text-3xl font-bold text-green-300 mb-4">Interview Complete!</h2>
+          <p className="text-slate-300 mb-6">
+            Your answers have been saved. Review the live documentation preview on the right and export when ready.
+          </p>
+          <div className="text-sm text-slate-400">
+            You can now close this panel or start a new session.
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const isFirst = currentIndex <= 0
   const isLast = currentIndex >= questionSequence.length - 1

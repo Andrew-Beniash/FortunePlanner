@@ -59,6 +59,10 @@ export interface SessionState {
   // Configuration
   outputLanguage: string // 'en' | 'es' | etc.
 
+  // Interview Completion
+  isInterviewComplete: boolean
+  completedAt: string | null
+
   // Guided Interview State
   currentQuestionId: string | null
   completedQuestionIds: string[]
@@ -89,6 +93,7 @@ export interface SessionState {
   setUserOverride: (sectionId: string, override: UserOverride) => void
   resetUserOverride: (sectionId: string) => void
   setOutputLanguage: (lang: string) => void
+  completeInterview: () => void
 
   // Validation / Computed
   recomputeValidation: () => void
@@ -117,6 +122,8 @@ type PersistedSession = Pick<SessionState,
   | 'sessionId'
   | 'blueprintVersion'
   | 'outputLanguage'
+  | 'isInterviewComplete'
+  | 'completedAt'
   | 'timestamp'
   | 'currentQuestionId'
   | 'completedQuestionIds'
@@ -154,6 +161,8 @@ const persistSession = (state: SessionState) => {
       sessionId: state.sessionId,
       blueprintVersion: state.blueprintVersion,
       outputLanguage: state.outputLanguage,
+      isInterviewComplete: state.isInterviewComplete,
+      completedAt: state.completedAt,
       timestamp: state.timestamp,
       currentQuestionId: state.currentQuestionId,
       completedQuestionIds: state.completedQuestionIds,
@@ -185,6 +194,8 @@ export const useSessionStore = create<SessionState>((set, get) => {
     sessionId: persistedState.sessionId || crypto.randomUUID(),
     blueprintVersion: persistedState.blueprintVersion || '1.0.0',
     outputLanguage: persistedState.outputLanguage || 'en',
+    isInterviewComplete: persistedState.isInterviewComplete || false,
+    completedAt: persistedState.completedAt || null,
     timestamp: persistedState.timestamp || initialTimestamp,
 
     lastModifiedAt: initialTimestamp,
@@ -355,6 +366,17 @@ export const useSessionStore = create<SessionState>((set, get) => {
     setOutputLanguage: (lang) => {
       const now = new Date().toISOString()
       set({ outputLanguage: lang, lastModifiedAt: now })
+    },
+
+    completeInterview: () => {
+      get().recomputeValidation()
+      const now = new Date().toISOString()
+      set({
+        isInterviewComplete: true,
+        completedAt: now,
+        lastModifiedAt: now,
+        timestamp: now
+      })
     },
 
     recomputeValidation: async () => {
