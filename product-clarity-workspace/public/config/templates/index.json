@@ -1,0 +1,9 @@
+[
+  {
+    "id": "product-brief-v1",
+    "name": "Standard Product Brief",
+    "description": "A comprehensive product overview including problem, solution, and market.",
+    "path": "/config/templates/product-brief.hbs",
+    "version": "1.0.0"
+  }
+]

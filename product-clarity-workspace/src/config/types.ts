@@ -23,6 +23,27 @@ export interface Question {
   }
 }
 
+export interface TemplateConfig {
+  id: string
+  name: string
+  description?: string
+  path: string
+  version: string
+  sections?: string[] // optional granular section tracking
+}
+
+export interface DocumentContext {
+  documentTitle: string
+  session: {
+    sessionId: string
+    blueprintId: string
+    blueprintVersion: string
+    timestamp: string
+  }
+  rawAnswers: Record<string, any> // Simplified for flexibility in template
+  derivedInferences: any // Will match AnalysisSummary.inferences
+}
+
 export interface Section {
   id: string
   title: string
@@ -37,8 +58,4 @@ export interface Blueprint {
   sections: Section[]
 }
 
-export interface TemplateConfig {
-  id: string
-  name: string
-  description: string
-}
+

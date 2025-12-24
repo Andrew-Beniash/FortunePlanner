@@ -1,0 +1,45 @@
+# Product Clarity Brief: {{documentTitle}}
+
+**Date:** {{session.timestamp}}
+**Blueprint:** {{session.blueprintVersion}}
+
+---
+
+## 1. Problem Statement
+{{#each derivedInferences.painPoints}}
+*   **{{description}}** (Severity: {{severity}})
+{{/each}}
+{{^derivedInferences.painPoints}}
+_No pain points identified._
+{{/derivedInferences.painPoints}}
+
+---
+
+## 2. Target Audience
+{{#each derivedInferences.personas}}
+### {{label}}
+{{description}}
+{{/each}}
+{{^derivedInferences.personas}}
+_No specific personas identified._
+{{/derivedInferences.personas}}
+
+---
+
+## 3. Market Opportunity
+{{#each derivedInferences.marketSizing}}
+*   **Segment:** {{segment}}
+    {{#if tam}}
+    *   **TAM:** {{tam}}
+    {{/if}}
+    *   _{{notes}}_
+{{/each}}
+
+---
+
+## 4. Risks & Viability
+{{#each derivedInferences.viability}}
+*   **Feasibility:** {{feasibility}}
+*   **Key Constraints:** {{join keyConstraints ", "}}
+*   **Overall Risk:** {{overallRisk}}
+{{/each}}
