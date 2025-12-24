@@ -18,7 +18,7 @@ export interface AnalysisSummary {
 }
 
 export async function runAnalysis(session: SessionState): Promise<AnalysisSummary> {
-  const normalized = normalizeAnswers(session.rawAnswers) // Keeping for now to avoid unused var
+  // const normalized = normalizeAnswers(session.rawAnswers) // Keeping for potential future use
 
   // Run Analyzers Parallelly
   const [ppResult, personaResult, marketResult, viabilityResult] = await Promise.all([
@@ -31,19 +31,35 @@ export async function runAnalysis(session: SessionState): Promise<AnalysisSummar
   // Extract Data
   const painPoints = ppResult.outputs
     .filter(o => o.type === 'painPoint')
-    .map(o => o.data as PainPoint)
+    .map(o => ({
+      ...(o.data as PainPoint),
+      provenance: o.provenance,
+      confidence: ppResult.confidence
+    }))
 
   const personas = personaResult.outputs
     .filter(o => o.type === 'persona')
-    .map(o => o.data as Persona)
+    .map(o => ({
+      ...(o.data as Persona),
+      provenance: o.provenance,
+      confidence: personaResult.confidence
+    }))
 
   const marketSizing = marketResult.outputs
     .filter(o => o.type === 'marketSizing')
-    .map(o => o.data as MarketSizing)
+    .map(o => ({
+      ...(o.data as MarketSizing),
+      provenance: o.provenance,
+      confidence: marketResult.confidence
+    }))
 
   const viability = viabilityResult.outputs
     .filter(o => o.type === 'viabilityAssessment')
-    .map(o => o.data as ViabilityAssessment)
+    .map(o => ({
+      ...(o.data as ViabilityAssessment),
+      provenance: o.provenance,
+      confidence: viabilityResult.confidence
+    }))
 
   return {
     inferences: {

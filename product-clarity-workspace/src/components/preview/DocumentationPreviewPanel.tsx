@@ -21,6 +21,7 @@ export default function DocumentationPreviewPanel() {
   const [editBuffer, setEditBuffer] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; content: any } | null>(null)
 
   // Trigger Generation on relevant state changes
   useEffect(() => {
@@ -110,6 +111,29 @@ export default function DocumentationPreviewPanel() {
     }
   }
 
+  const handleMouseOver = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    const source = target.getAttribute('data-source')
+    const refs = target.getAttribute('data-refs')
+    const assumptionsStr = target.getAttribute('data-assumptions')
+
+    if (source || refs || assumptionsStr) {
+      const assumptions = assumptionsStr
+        ? JSON.parse(decodeURIComponent(assumptionsStr))
+        : []
+
+      setTooltip({
+        x: e.clientX,
+        y: e.clientY,
+        content: { source, refs, assumptions }
+      })
+    }
+  }
+
+  const handleMouseOut = () => {
+    setTooltip(null)
+  }
+
   return (
     <div className="p-4 h-full bg-slate-800 flex flex-col">
       <div className="flex justify-between items-center mb-4">
@@ -143,7 +167,37 @@ export default function DocumentationPreviewPanel() {
         </div>
       </div>
 
-      <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+      {/* Provenance Tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-slate-800 text-white text-xs p-3 rounded shadow-xl max-w-xs pointer-events-none border border-slate-600"
+          style={{ top: tooltip.y + 10, left: tooltip.x + 10 }}
+        >
+          <div className="font-bold mb-1 border-b border-slate-600 pb-1 text-slate-200">Provenance</div>
+          {tooltip.content.source && (
+            <div className="mb-1">
+              <span className="text-slate-400">Source:</span> {tooltip.content.source}
+            </div>
+          )}
+          {tooltip.content.refs && (
+            <div className="mb-1">
+              <span className="text-slate-400">References:</span> {tooltip.content.refs}
+            </div>
+          )}
+          {tooltip.content.assumptions && tooltip.content.assumptions.length > 0 && (
+            <div className="mt-2">
+              <span className="text-slate-400 block mb-1">Assumptions:</span>
+              <ul className="list-disc pl-4 space-y-0.5">
+                {tooltip.content.assumptions.map((a: string, i: number) => (
+                  <li key={i} className="text-slate-300">{a}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar" onMouseLeave={handleMouseOut}>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
@@ -226,7 +280,8 @@ export default function DocumentationPreviewPanel() {
                 ) : (
                   <div
                     className="prose prose-sm max-w-none text-slate-800"
-                    dangerouslySetInnerHTML={{ __html: section.html }} // Safe because generated from trusted templates or user input
+                    dangerouslySetInnerHTML={{ __html: section.html }}
+                    onMouseOver={handleMouseOver}
                   />
                 )}
               </div>

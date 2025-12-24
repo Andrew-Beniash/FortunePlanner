@@ -1,4 +1,4 @@
-import { SessionState } from '../state/sessionStore'
+import type { SessionState } from '../state/sessionStore'
 
 export function normalizeAnswers(data: SessionState['rawAnswers']) {
   // TODO: Implement normalization

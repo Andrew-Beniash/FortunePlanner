@@ -13,7 +13,7 @@
         <ul>
             {{#each derivedInferences.painPoints}}
             <li>
-                <strong>{{description}}</strong> (Severity: {{severity}})
+                <strong>{{smartSpan description this}}</strong> (Severity: {{severity}})
             </li>
             {{/each}}
         </ul>
@@ -28,7 +28,7 @@
         {{#each derivedInferences.personas}}
         <div class="persona" style="margin-bottom: 1rem;">
             <h3>{{label}}</h3>
-            <p>{{description}}</p>
+            <p>{{smartSpan description this}}</p>
         </div>
         {{/each}}
         {{else}}
@@ -42,7 +42,7 @@
         <div class="market-segment">
             <p><strong>Segment:</strong> {{segment}}</p>
             {{#if tam}}
-            <p><strong>TAM:</strong> {{tam}}</p>
+            <p><strong>TAM:</strong> {{smartSpan tam this}}</p>
             {{/if}}
             <p><em>{{notes}}</em></p>
         </div>

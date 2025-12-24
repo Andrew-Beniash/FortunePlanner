@@ -43,4 +43,17 @@
   .pcw-status-incomplete {
     @apply px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-400 border border-slate-600;
   }
+
+  /* Provenance and Uncertainty Visualization */
+  .uncertain-low {
+    text-decoration: underline wavy #ef4444;
+    text-decoration-thickness: 1px;
+    cursor: help;
+  }
+
+  .uncertain-medium {
+    text-decoration: underline dotted #eab308;
+    text-decoration-thickness: 1px;
+    cursor: help;
+  }
 }

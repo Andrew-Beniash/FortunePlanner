@@ -18,6 +18,29 @@ Handlebars.registerHelper('formatDate', function (dateString: string) {
 })
 
 // Example: Safe access helper if needed
+Handlebars.registerHelper('smartSpan', function (text: string, context: any) {
+  if (!text) return ''
+
+  // check for confidence and provenance in the context (this)
+  const confidence = context?.confidence || 'high'
+  const provenance = context?.provenance
+
+  let classes = ''
+  if (confidence === 'low') classes = 'uncertain-low'
+  if (confidence === 'medium') classes = 'uncertain-medium'
+
+  let attrs = ''
+  if (provenance) {
+    if (provenance.source) attrs += ` data-source="${provenance.source}"`
+    if (provenance.references) attrs += ` data-refs="${provenance.references.join(',')}"`
+    if (provenance.assumptions) attrs += ` data-assumptions="${encodeURIComponent(JSON.stringify(provenance.assumptions))}"`
+  }
+
+  if (!classes && !attrs) return text
+
+  return new Handlebars.SafeString(`<span class="${classes}"${attrs}>${Handlebars.escapeExpression(text)}</span>`)
+})
+
 Handlebars.registerHelper('get', function (obj, prop) {
   return obj ? obj[prop] : undefined
 })

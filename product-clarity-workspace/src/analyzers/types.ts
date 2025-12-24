@@ -1,7 +1,11 @@
 import type { SessionState } from '../state/sessionStore'
 
-// Domain Types
-export interface PainPoint {
+export interface ConfidenceMetadata {
+  confidence?: 'high' | 'medium' | 'low'
+  provenance?: Provenance
+}
+
+export interface PainPoint extends ConfidenceMetadata {
   id: string
   description: string
   severity: 'low' | 'medium' | 'high'
@@ -9,7 +13,7 @@ export interface PainPoint {
   notes?: string
 }
 
-export interface Persona {
+export interface Persona extends ConfidenceMetadata {
   id: string
   label: string
   description: string
@@ -19,7 +23,7 @@ export interface Persona {
   notes?: string
 }
 
-export interface MarketSizing {
+export interface MarketSizing extends ConfidenceMetadata {
   id: string
   segment: string
   tam?: number
@@ -30,7 +34,7 @@ export interface MarketSizing {
   notes?: string
 }
 
-export interface ViabilityAssessment {
+export interface ViabilityAssessment extends ConfidenceMetadata {
   id: string
   feasibility: 'low' | 'medium' | 'high'
   keyConstraints: string[]
