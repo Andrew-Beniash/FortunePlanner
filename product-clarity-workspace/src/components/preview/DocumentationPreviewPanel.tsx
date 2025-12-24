@@ -1,4 +1,4 @@
-import { useSessionStore } from '../state/sessionStore'
+import { useSessionStore } from '../../state/sessionStore'
 
 export default function DocumentationPreviewPanel() {
   const derivedInferences = useSessionStore((state) => state.derivedInferences)

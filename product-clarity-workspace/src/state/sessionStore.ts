@@ -86,6 +86,12 @@ interface SessionState {
   // Validation / Computed
   recomputeValidation: () => void
 
+  // Navigation Actions
+  goToQuestion: (questionId: string) => void
+  goToNextQuestion: (availableQuestions: string[]) => void
+  goToPreviousQuestion: (availableQuestions: string[]) => void
+  skipCurrentQuestion: (availableQuestions: string[]) => void
+
   // Persistence Actions
   saveActiveSession: () => void
 
@@ -219,15 +225,42 @@ export const useSessionStore = create<SessionState>((set, get) => {
     },
 
     setCurrentQuestion: (questionId) => {
-      // Navigating doesn't necessarily need to be persisted immediately or count as a modification
-      // depending on requirement. The prompt says "mostly answers, etc."
-      // But we persist 'currentQuestionId' so we should track it.
       set({
         currentQuestionId: questionId,
-        // We can choose NOT to update lastModifiedAt if we consider nav transient, 
-        // but robust session restoration usually wants to return to the same place.
         lastModifiedAt: new Date().toISOString()
       })
+    },
+
+    goToQuestion: (questionId) => {
+      get().setCurrentQuestion(questionId)
+    },
+
+    goToNextQuestion: (availableQuestions) => {
+      const state = get()
+      const currentId = state.currentQuestionId
+      if (!currentId) return
+
+      const idx = availableQuestions.indexOf(currentId)
+      if (idx !== -1 && idx < availableQuestions.length - 1) {
+        get().setCurrentQuestion(availableQuestions[idx + 1])
+      }
+    },
+
+    goToPreviousQuestion: (availableQuestions) => {
+      const state = get()
+      const currentId = state.currentQuestionId
+      if (!currentId) return
+
+      const idx = availableQuestions.indexOf(currentId)
+      if (idx !== -1 && idx > 0) {
+        get().setCurrentQuestion(availableQuestions[idx - 1])
+      }
+    },
+
+    skipCurrentQuestion: (availableQuestions) => {
+      // For now, skipping just moves next. 
+      // Future: add to skippedIds list.
+      get().goToNextQuestion(availableQuestions)
     },
 
     recordAnswer: (questionId, value, confidence = 'high') => {
