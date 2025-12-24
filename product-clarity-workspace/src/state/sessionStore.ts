@@ -87,6 +87,7 @@ export interface SessionState {
   setGaps: (gaps: Gap[]) => void
   setContradictions: (contradictions: Contradiction[]) => void
   setUserOverride: (sectionId: string, override: UserOverride) => void
+  resetUserOverride: (sectionId: string) => void
 
   // Validation / Computed
   recomputeValidation: () => void
@@ -222,7 +223,14 @@ export const useSessionStore = create<SessionState>((set, get) => {
         completedQuestionIds: [],
         rawAnswers: {},
         userOverrides: {},
-        derivedInferences: { painPoints: [], personas: [], risks: [], assumptions: [] },
+        derivedInferences: {
+          painPoints: [],
+          personas: [],
+          marketSizing: [],
+          viability: [],
+          risks: [],
+          assumptions: []
+        },
         gaps: [],
         contradictions: [],
         completionBySection: {}
@@ -312,6 +320,12 @@ export const useSessionStore = create<SessionState>((set, get) => {
       set({ contradictions, timestamp: now, lastModifiedAt: now })
     },
 
+    // --- Override Actions ---
+    // "User edit wins" policy:
+    // Any section with an entry in userOverrides will serve the editedText 
+    // instead of the auto-generated template content.
+    // Regeneration (via recomputeValidation/analyzers) only updates the derivedInferences,
+    // it does NOT touch userOverrides. This ensures manual edits persist until explicitly reverted.
     setUserOverride: (sectionId, override) => {
       const now = new Date().toISOString()
       set((state) => ({
@@ -319,6 +333,19 @@ export const useSessionStore = create<SessionState>((set, get) => {
         timestamp: now,
         lastModifiedAt: now
       }))
+    },
+
+    resetUserOverride: (sectionId) => {
+      const now = new Date().toISOString()
+      set((state) => {
+        const newOverrides = { ...state.userOverrides }
+        delete newOverrides[sectionId]
+        return {
+          userOverrides: newOverrides,
+          timestamp: now,
+          lastModifiedAt: now
+        }
+      })
     },
 
     recomputeValidation: async () => {

@@ -5,7 +5,8 @@ export interface PreviewSection {
   id: string
   title: string
   html: string
-  status: 'complete' | 'incomplete'
+  status: 'complete' | 'incomplete' | 'needsReview'
+  isEdited: boolean
 }
 
 export async function renderPreview(session: SessionState): Promise<PreviewSection[]> {
@@ -13,14 +14,17 @@ export async function renderPreview(session: SessionState): Promise<PreviewSecti
     // Generate full document HTML
     const { html } = await generateOutput(session, 'product-brief-v1')
 
-    // For now, return the whole doc as one section
-    // Future: Parse HTML or use distinct templates per section to split them
+    // Check for overrides on the "full-doc" section (since we only have one right now)
+    const sectionId = 'full-doc'
+    const override = session.userOverrides[sectionId]
+
     return [
       {
-        id: 'full-doc',
-        title: 'Full Product Brief',
-        html: html,
-        status: 'complete' // Logic for status can be added later
+        id: sectionId,
+        title: 'Product Clarity Brief',
+        html: override ? override.editedText : html,
+        status: 'complete', // TODO: derive from session.completionBySection
+        isEdited: !!override
       }
     ]
   } catch (err) {
@@ -30,7 +34,8 @@ export async function renderPreview(session: SessionState): Promise<PreviewSecti
         id: 'error',
         title: 'Error',
         html: `<div class="error">Failed to generate preview: ${(err as Error).message}</div>`,
-        status: 'incomplete'
+        status: 'incomplete',
+        isEdited: false
       }
     ]
   }
