@@ -43,6 +43,7 @@ export interface DocumentContext {
   }
   rawAnswers: Record<string, any> // Simplified for flexibility in template
   derivedInferences: any // Will match AnalysisSummary.inferences
+  outputLanguage?: string
 }
 
 export interface ExportMetadata {

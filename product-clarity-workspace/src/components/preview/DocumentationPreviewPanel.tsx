@@ -12,6 +12,8 @@ export default function DocumentationPreviewPanel() {
 
   const setUserOverride = useSessionStore((state) => state.setUserOverride)
   const resetUserOverride = useSessionStore((state) => state.resetUserOverride)
+  const setOutputLanguage = useSessionStore((state) => state.setOutputLanguage)
+  const outputLanguage = useSessionStore((state) => state.outputLanguage)
 
   // Local Component State
   const [sections, setSections] = useState<PreviewSection[]>([])
@@ -40,7 +42,8 @@ export default function DocumentationPreviewPanel() {
     // Dependencies that should trigger re-render
     sessionState.rawAnswers,
     sessionState.userOverrides,
-    sessionState.derivedInferences
+    sessionState.derivedInferences,
+    sessionState.outputLanguage
   ])
 
   // --- Handlers ---
@@ -114,6 +117,17 @@ export default function DocumentationPreviewPanel() {
 
         <div className="flex space-x-2">
           {isGenerating && <span className="text-xs text-blue-400 animate-pulse self-center mr-2">Updating...</span>}
+
+          <div className="relative group">
+            <button disabled={isExporting} className="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded flex items-center space-x-1 border border-slate-600">
+              <span className="uppercase">{outputLanguage}</span>
+              <span>▼</span>
+            </button>
+            <div className="absolute right-0 mt-1 w-32 bg-white rounded shadow-lg overflow-hidden hidden group-hover:block z-20">
+              <button onClick={() => setOutputLanguage('en')} className={`block w-full text-left px-4 py-2 text-sm hover:bg-slate-100 ${outputLanguage === 'en' ? 'font-bold bg-blue-50 text-blue-600' : 'text-slate-700'}`}>English</button>
+              <button onClick={() => setOutputLanguage('es')} className={`block w-full text-left px-4 py-2 text-sm hover:bg-slate-100 ${outputLanguage === 'es' ? 'font-bold bg-blue-50 text-blue-600' : 'text-slate-700'}`}>Español</button>
+            </div>
+          </div>
 
           <div className="relative group">
             <button disabled={isExporting} className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded flex items-center space-x-1 disabled:opacity-50">

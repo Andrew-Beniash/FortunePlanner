@@ -1,7 +1,8 @@
 import type { SessionState } from '../state/sessionStore'
 import { runAnalysis } from '../engine/analysisEngine'
-import { loadTemplates, loadTemplateBody } from './templates'
+import { loadTemplateBody, getTemplateForLanguage } from './templates'
 import { compileTemplate } from './handlebarsEngine'
+import { translateHtml } from '../engine/translation'
 import type { DocumentContext } from '../config/types'
 
 // Map Session to DocumentContext
@@ -21,7 +22,8 @@ function buildContext(session: SessionState, analysisResults: any): DocumentCont
       timestamp: new Date().toISOString()
     },
     rawAnswers: answers,
-    derivedInferences: analysisResults.inferences
+    derivedInferences: analysisResults.inferences,
+    outputLanguage: session.outputLanguage // Add for template usage
   }
 }
 
@@ -43,11 +45,19 @@ export async function generateOutput(session: SessionState, templateId: string =
   // 2. Build Context
   const context = buildContext(session, analysis)
 
-  // 3. Load Template
-  const templates = await loadTemplates()
-  const config = templates.find(t => t.id === templateId)
+  // 3. Resolve Template (Language-aware)
+  let config = await getTemplateForLanguage(templateId, session.outputLanguage)
+  let needsFallbackTranslation = false
+
   if (!config) {
-    throw new Error(`Template not found: ${templateId}`)
+    // Try fallback to 'en' basic template if specific lang not found
+    console.warn(`Template not found for ${templateId} (${session.outputLanguage}), falling back to 'en' and translating.`)
+    config = await getTemplateForLanguage(templateId, 'en')
+    needsFallbackTranslation = true
+  }
+
+  if (!config) {
+    throw new Error(`Template not found: ${templateId} (checked ${session.outputLanguage} and 'en')`)
   }
 
   const templateBody = await loadTemplateBody(config.path)
@@ -56,7 +66,12 @@ export async function generateOutput(session: SessionState, templateId: string =
   }
 
   // 4. Compile & Render
-  const html = compileTemplate(templateBody, context)
+  let html = compileTemplate(templateBody, context)
+
+  // 5. Apply Translation Fallback if needed
+  if (needsFallbackTranslation && session.outputLanguage !== 'en') {
+    html = await translateHtml(html, session.outputLanguage)
+  }
 
   // 5. Construct Metadata
   const completionPercentage = session.completionBySection['general']?.completeness || 0
@@ -67,7 +82,8 @@ export async function generateOutput(session: SessionState, templateId: string =
     blueprintVersion: session.blueprintVersion,
     timestamp: new Date().toISOString(),
     completionPercentage,
-    assumptions: session.derivedInferences.assumptions || [] // Ensure fallback
+    assumptions: session.derivedInferences.assumptions || [], // Ensure fallback
+    outputLanguage: session.outputLanguage
   }
 
   return {
