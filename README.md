@@ -270,5 +270,5 @@ For issues or questions, contact the development team.
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: December 2024
+**Version**: 0.6.0  
+**Last Updated**: December 2025
