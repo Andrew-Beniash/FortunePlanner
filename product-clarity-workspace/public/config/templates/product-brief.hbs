@@ -1,45 +1,62 @@
-# Product Clarity Brief: {{documentTitle}}
+<div class="product-brief">
+    <header style="margin-bottom: 2rem; border-bottom: 2px solid #ccc; padding-bottom: 1rem;">
+        <h1>Product Clarity Brief: {{documentTitle}}</h1>
+        <div class="meta" style="color: #666; font-size: 0.9rem;">
+            <p><strong>Date:</strong> {{formatDate session.timestamp}}</p>
+            <p><strong>Blueprint:</strong> {{session.blueprintVersion}}</p>
+        </div>
+    </header>
 
-**Date:** {{session.timestamp}}
-**Blueprint:** {{session.blueprintVersion}}
+    <section id="problem-statement" style="margin-bottom: 2rem;">
+        <h2>1. Problem Statement</h2>
+        {{#if derivedInferences.painPoints.length}}
+        <ul>
+            {{#each derivedInferences.painPoints}}
+            <li>
+                <strong>{{description}}</strong> (Severity: {{severity}})
+            </li>
+            {{/each}}
+        </ul>
+        {{else}}
+        <p><em>No pain points identified.</em></p>
+        {{/if}}
+    </section>
 
----
+    <section id="target-audience" style="margin-bottom: 2rem;">
+        <h2>2. Target Audience</h2>
+        {{#if derivedInferences.personas.length}}
+        {{#each derivedInferences.personas}}
+        <div class="persona" style="margin-bottom: 1rem;">
+            <h3>{{label}}</h3>
+            <p>{{description}}</p>
+        </div>
+        {{/each}}
+        {{else}}
+        <p><em>No specific personas identified.</em></p>
+        {{/if}}
+    </section>
 
-## 1. Problem Statement
-{{#each derivedInferences.painPoints}}
-*   **{{description}}** (Severity: {{severity}})
-{{/each}}
-{{^derivedInferences.painPoints}}
-_No pain points identified._
-{{/derivedInferences.painPoints}}
+    <section id="market-opportunity" style="margin-bottom: 2rem;">
+        <h2>3. Market Opportunity</h2>
+        {{#each derivedInferences.marketSizing}}
+        <div class="market-segment">
+            <p><strong>Segment:</strong> {{segment}}</p>
+            {{#if tam}}
+            <p><strong>TAM:</strong> {{tam}}</p>
+            {{/if}}
+            <p><em>{{notes}}</em></p>
+        </div>
+        {{/each}}
+    </section>
 
----
-
-## 2. Target Audience
-{{#each derivedInferences.personas}}
-### {{label}}
-{{description}}
-{{/each}}
-{{^derivedInferences.personas}}
-_No specific personas identified._
-{{/derivedInferences.personas}}
-
----
-
-## 3. Market Opportunity
-{{#each derivedInferences.marketSizing}}
-*   **Segment:** {{segment}}
-    {{#if tam}}
-    *   **TAM:** {{tam}}
-    {{/if}}
-    *   _{{notes}}_
-{{/each}}
-
----
-
-## 4. Risks & Viability
-{{#each derivedInferences.viability}}
-*   **Feasibility:** {{feasibility}}
-*   **Key Constraints:** {{join keyConstraints ", "}}
-*   **Overall Risk:** {{overallRisk}}
-{{/each}}
+    <section id="risks-viability">
+        <h2>4. Risks & Viability</h2>
+        {{#each derivedInferences.viability}}
+        <ul>
+            <li><strong>Feasibility:</strong> {{feasibility}}</li>
+            <li><strong>Key Constraints:</strong> {{join keyConstraints ", "}}</li>
+            <li><strong>Overall Risk:</strong> {{overallRisk}}</li>
+        </ul>
+        {{/each}}
+    </section>
+</div>

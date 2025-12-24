@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { validateSession } from '../engine/validation'
 
 // --- Domain Types ---
 
@@ -47,8 +46,6 @@ export interface SessionSummary {
 
 // --- State Interface ---
 
-// --- State Interface ---
-
 export interface SessionState {
   // Core Session Data
   sessionId: string
@@ -58,6 +55,9 @@ export interface SessionState {
   // Persistence Tracking
   lastModifiedAt: string
   lastSavedAt: string | null
+
+  // Configuration
+  outputLanguage: string // 'en' | 'es' | etc.
 
   // Guided Interview State
   currentQuestionId: string | null
@@ -88,6 +88,7 @@ export interface SessionState {
   setContradictions: (contradictions: Contradiction[]) => void
   setUserOverride: (sectionId: string, override: UserOverride) => void
   resetUserOverride: (sectionId: string) => void
+  setOutputLanguage: (lang: string) => void
 
   // Validation / Computed
   recomputeValidation: () => void
@@ -115,6 +116,7 @@ const STORAGE_KEY = 'pcw_active_session_v1'
 type PersistedSession = Pick<SessionState,
   | 'sessionId'
   | 'blueprintVersion'
+  | 'outputLanguage'
   | 'timestamp'
   | 'currentQuestionId'
   | 'completedQuestionIds'
@@ -151,6 +153,7 @@ const persistSession = (state: SessionState) => {
     const toSave: PersistedSession = {
       sessionId: state.sessionId,
       blueprintVersion: state.blueprintVersion,
+      outputLanguage: state.outputLanguage,
       timestamp: state.timestamp,
       currentQuestionId: state.currentQuestionId,
       completedQuestionIds: state.completedQuestionIds,
@@ -181,6 +184,7 @@ export const useSessionStore = create<SessionState>((set, get) => {
   const initialState = {
     sessionId: persistedState.sessionId || crypto.randomUUID(),
     blueprintVersion: persistedState.blueprintVersion || '1.0.0',
+    outputLanguage: persistedState.outputLanguage || 'en',
     timestamp: persistedState.timestamp || initialTimestamp,
 
     lastModifiedAt: initialTimestamp,
@@ -348,14 +352,21 @@ export const useSessionStore = create<SessionState>((set, get) => {
       })
     },
 
+    setOutputLanguage: (lang) => {
+      const now = new Date().toISOString()
+      set({ outputLanguage: lang, lastModifiedAt: now })
+    },
+
     recomputeValidation: async () => {
       const state = get()
+      // Use dynamic import to avoid circular dependency
+      const { validateSession } = await import('../engine/validation')
       const { gaps, isValid } = await validateSession(state)
 
       // Calculate simple completion based on gaps vs total fields
       // This is a simplified heuristic; usually we want explicit questions count
       // But validateSession already iterates active questions.
-      // Ideally validateSession returns completeness stats too. 
+      // Ideally validateSession returns completeness stats too.
       // For now, we update Gaps.
 
       const totalQuestions = 5 // TODO: dynamic from blueprint

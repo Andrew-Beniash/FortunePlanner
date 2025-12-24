@@ -16,7 +16,7 @@ function buildContext(session: SessionState, analysisResults: any): DocumentCont
     documentTitle: 'Product Clarity Document', // Could come from answers
     session: {
       sessionId: session.sessionId,
-      blueprintId: session.blueprintId,
+      blueprintId: session.blueprintId || 'unknown',
       blueprintVersion: session.blueprintVersion,
       timestamp: new Date().toISOString()
     },
@@ -25,12 +25,18 @@ function buildContext(session: SessionState, analysisResults: any): DocumentCont
   }
 }
 
+import type { ExportMetadata } from '../config/types'
+
 export interface GeneratedOutput {
   html: string
   templateId: string
+  metadata: ExportMetadata
 }
 
 export async function generateOutput(session: SessionState, templateId: string = 'product-brief-v1'): Promise<GeneratedOutput> {
+  // 0. Null check
+  if (!templateId) throw new Error('Template ID is required')
+
   // 1. Run Analysis (fresh)
   const analysis = await runAnalysis(session)
 
@@ -52,8 +58,21 @@ export async function generateOutput(session: SessionState, templateId: string =
   // 4. Compile & Render
   const html = compileTemplate(templateBody, context)
 
+  // 5. Construct Metadata
+  const completionPercentage = session.completionBySection['general']?.completeness || 0
+
+  const metadata: ExportMetadata = {
+    sessionId: session.sessionId,
+    blueprintId: session.blueprintId || 'unknown',
+    blueprintVersion: session.blueprintVersion,
+    timestamp: new Date().toISOString(),
+    completionPercentage,
+    assumptions: session.derivedInferences.assumptions || [] // Ensure fallback
+  }
+
   return {
     html,
-    templateId
+    templateId,
+    metadata
   }
 }

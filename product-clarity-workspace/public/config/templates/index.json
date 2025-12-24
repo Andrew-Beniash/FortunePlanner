@@ -1,9 +1,18 @@
 [
   {
     "id": "product-brief-v1",
-    "name": "Standard Product Brief",
-    "description": "A comprehensive product overview including problem, solution, and market.",
+    "name": "Product Clarity Brief (English)",
+    "description": "Standard output format for Product Clarity sessions",
     "path": "/config/templates/product-brief.hbs",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "locale": "en"
+  },
+  {
+    "id": "product-brief-v1",
+    "name": "Resumen de Claridad del Producto (Español)",
+    "description": "Formato de salida estándar en Español",
+    "path": "/config/templates/product-brief.es.hbs",
+    "version": "1.0.0",
+    "locale": "es"
   }
 ]

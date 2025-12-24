@@ -29,6 +29,7 @@ export interface TemplateConfig {
   description?: string
   path: string
   version: string
+  locale?: string
   sections?: string[] // optional granular section tracking
 }
 
@@ -42,6 +43,17 @@ export interface DocumentContext {
   }
   rawAnswers: Record<string, any> // Simplified for flexibility in template
   derivedInferences: any // Will match AnalysisSummary.inferences
+}
+
+export interface ExportMetadata {
+  sessionId: string
+  blueprintId: string
+  blueprintVersion: string
+  questionLibraryVersion?: string
+  timestamp: string
+  completionPercentage: number
+  assumptions: string[]
+  outputLanguage?: string
 }
 
 export interface Section {

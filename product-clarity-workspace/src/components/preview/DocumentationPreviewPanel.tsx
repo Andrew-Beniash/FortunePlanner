@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSessionStore } from '../../state/sessionStore'
 import { renderPreview, type PreviewSection } from '../../templates/previewRenderer'
+import { renderExport } from '../../templates/exportRenderer'
 
 export default function DocumentationPreviewPanel() {
   // Global State
@@ -17,9 +18,9 @@ export default function DocumentationPreviewPanel() {
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
   const [editBuffer, setEditBuffer] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Trigger Generation on relevant state changes
-  // Debounce could be added here for performance
   useEffect(() => {
     let mounted = true
 
@@ -40,8 +41,6 @@ export default function DocumentationPreviewPanel() {
     sessionState.rawAnswers,
     sessionState.userOverrides,
     sessionState.derivedInferences
-    // Note: Passing full object might cause too many renders.
-    // In prod, use shallow or specific selectors.
   ])
 
   // --- Handlers ---
@@ -58,7 +57,7 @@ export default function DocumentationPreviewPanel() {
 
   const handleSaveEdit = (section: PreviewSection) => {
     setUserOverride(section.id, {
-      originalText: section.isEdited ? '' : section.html, // If already edited, original is lost in this simple flows (should read from override). Ideally we preserve first diff.
+      originalText: section.isEdited ? '' : section.html,
       editedText: editBuffer,
       timestamp: new Date().toISOString()
     })
@@ -71,11 +70,63 @@ export default function DocumentationPreviewPanel() {
     }
   }
 
+  const handleExport = async (format: 'md' | 'docx' | 'pdf') => {
+    try {
+      setIsExporting(true)
+      const output = await renderExport(sessionState, format)
+
+      if (typeof output === 'string') {
+        // Markdown download
+        const blob = new Blob([output], { type: 'text/markdown' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `product-brief-${sessionState.sessionId.substring(0, 8)}.${format}`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      } else {
+        // Blob download (PDF/DOCX) - placeholder for now as logic in exportRenderer returns string always in v1
+        const blob = output as Blob
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `product-brief-${sessionState.sessionId.substring(0, 8)}.${format}`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+
+    } catch (err) {
+      console.error('Export failed:', err)
+      alert('Failed to export document. Check console for details.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className="p-4 h-full bg-slate-800 flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-slate-100">Live Documentation Preview</h2>
-        {isGenerating && <span className="text-xs text-blue-400 animate-pulse">Updating...</span>}
+
+        <div className="flex space-x-2">
+          {isGenerating && <span className="text-xs text-blue-400 animate-pulse self-center mr-2">Updating...</span>}
+
+          <div className="relative group">
+            <button disabled={isExporting} className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded flex items-center space-x-1 disabled:opacity-50">
+              <span>{isExporting ? 'Exporting...' : 'Export As...'}</span>
+            </button>
+            {/* Dropdown Menu */}
+            <div className="absolute right-0 mt-1 w-32 bg-white rounded shadow-lg overflow-hidden hidden group-hover:block z-10">
+              <button onClick={() => handleExport('md')} className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Markdown (.md)</button>
+              <button onClick={() => handleExport('docx')} className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Word (.docx)</button>
+              <button onClick={() => handleExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">PDF (.pdf)</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">

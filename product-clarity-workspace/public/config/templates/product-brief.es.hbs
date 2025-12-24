@@ -1,0 +1,62 @@
+<div class="product-brief">
+  <header style="margin-bottom: 2rem; border-bottom: 2px solid #ccc; padding-bottom: 1rem;">
+    <h1>Resumen de Claridad del Producto: {{documentTitle}}</h1>
+    <div class="meta" style="color: #666; font-size: 0.9rem;">
+      <p><strong>Fecha:</strong> {{formatDate session.timestamp}}</p>
+      <p><strong>Blueprint:</strong> {{session.blueprintVersion}}</p>
+    </div>
+  </header>
+
+  <section id="problem-statement" style="margin-bottom: 2rem;">
+    <h2>1. Planteamiento del Problema</h2>
+    {{#if derivedInferences.painPoints.length}}
+    <ul>
+      {{#each derivedInferences.painPoints}}
+      <li>
+        <strong>{{description}}</strong> (Severidad: {{severity}})
+      </li>
+      {{/each}}
+    </ul>
+    {{else}}
+    <p><em>No se identificaron puntos de dolor.</em></p>
+    {{/if}}
+  </section>
+
+  <section id="target-audience" style="margin-bottom: 2rem;">
+    <h2>2. Audiencia Objetivo</h2>
+    {{#if derivedInferences.personas.length}}
+    {{#each derivedInferences.personas}}
+    <div class="persona" style="margin-bottom: 1rem;">
+      <h3>{{label}}</h3>
+      <p>{{description}}</p>
+    </div>
+    {{/each}}
+    {{else}}
+    <p><em>No se identificaron personas específicas.</em></p>
+    {{/if}}
+  </section>
+
+  <section id="market-opportunity" style="margin-bottom: 2rem;">
+    <h2>3. Oportunidad de Mercado</h2>
+    {{#each derivedInferences.marketSizing}}
+    <div class="market-segment">
+      <p><strong>Segmento:</strong> {{segment}}</p>
+      {{#if tam}}
+      <p><strong>TAM:</strong> {{tam}}</p>
+      {{/if}}
+      <p><em>{{notes}}</em></p>
+    </div>
+    {{/each}}
+  </section>
+
+  <section id="risks-viability">
+    <h2>4. Riesgos y Viabilidad</h2>
+    {{#each derivedInferences.viability}}
+    <ul>
+      <li><strong>Viabilidad:</strong> {{feasibility}}</li>
+      <li><strong>Restricciones Clave:</strong> {{join keyConstraints ", "}}</li>
+      <li><strong>Riesgo General:</strong> {{overallRisk}}</li>
+    </ul>
+    {{/each}}
+  </section>
+</div>
