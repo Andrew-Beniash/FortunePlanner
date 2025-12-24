@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars'
+import { sanitizeHtml } from '../utils/sanitize'
 
 // Register common helpers (one-time setup if needed, or re-register ensuring safety)
 // In a larger app, move helper registration to a setup function.
@@ -48,7 +49,10 @@ Handlebars.registerHelper('get', function (obj, prop) {
 export function compileTemplate(templateSource: string, context: any): string {
   try {
     const template = Handlebars.compile(templateSource)
-    return template(context)
+    const html = template(context)
+
+    // Sanitize the output to prevent XSS
+    return sanitizeHtml(html)
   } catch (err) {
     console.error('[Handlebars Engine] Compilation error:', err)
     return `Error generating content: ${(err as Error).message}`

@@ -4,6 +4,7 @@ import { loadTemplateBody, getTemplateForLanguage } from './templates'
 import { compileTemplate } from './handlebarsEngine'
 import { translateHtml } from '../engine/translation'
 import type { DocumentContext } from '../config/types'
+import { startTimer, endTimer } from '../utils/perfMonitor'
 
 // Map Session to DocumentContext
 function buildContext(session: SessionState, analysisResults: any): DocumentContext {
@@ -36,6 +37,8 @@ export interface GeneratedOutput {
 }
 
 export async function generateOutput(session: SessionState, templateId: string = 'product-brief-v1'): Promise<GeneratedOutput> {
+  startTimer('generateOutput')
+
   // 0. Null check
   if (!templateId) throw new Error('Template ID is required')
 
@@ -85,6 +88,8 @@ export async function generateOutput(session: SessionState, templateId: string =
     assumptions: session.derivedInferences.assumptions || [], // Ensure fallback
     outputLanguage: session.outputLanguage
   }
+
+  endTimer('generateOutput')
 
   return {
     html,

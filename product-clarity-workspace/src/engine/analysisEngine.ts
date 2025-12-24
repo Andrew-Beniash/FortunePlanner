@@ -5,6 +5,7 @@ import { runPersonaAnalyzer } from '../analyzers/personaAnalyzer'
 import { runMarketSizingAnalyzer } from '../analyzers/marketSizingAnalyzer'
 import { runViabilityAnalyzer } from '../analyzers/viabilityAnalyzer'
 import type { PainPoint, Persona, MarketSizing, ViabilityAssessment } from '../analyzers/types'
+import { startTimer, endTimer } from '../utils/perfMonitor'
 
 export interface AnalysisSummary {
   inferences: {
@@ -18,6 +19,7 @@ export interface AnalysisSummary {
 }
 
 export async function runAnalysis(session: SessionState): Promise<AnalysisSummary> {
+  startTimer('runAnalysis')
   // const normalized = normalizeAnswers(session.rawAnswers) // Keeping for potential future use
 
   // Run Analyzers Parallelly
@@ -61,7 +63,7 @@ export async function runAnalysis(session: SessionState): Promise<AnalysisSummar
       confidence: viabilityResult.confidence
     }))
 
-  return {
+  const result = {
     inferences: {
       painPoints,
       personas,
@@ -71,4 +73,7 @@ export async function runAnalysis(session: SessionState): Promise<AnalysisSummar
     gaps: [],
     contradictions: []
   }
+
+  endTimer('runAnalysis')
+  return result
 }
