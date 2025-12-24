@@ -1,3 +1,46 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 font-sans antialiased;
+  }
+
+  /* Documentation-friendly scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-600 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
+  }
+}
+
+@layer components {
+  .pcw-panel {
+    @apply h-full overflow-hidden flex flex-col;
+  }
+
+  .pcw-section-title {
+    @apply text-xl font-bold mb-4 text-slate-100;
+  }
+
+  /* Status Chips */
+  .pcw-status-complete {
+    @apply px-2 py-0.5 rounded text-xs font-medium bg-green-900/50 text-green-300 border border-green-800;
+  }
+
+  .pcw-status-incomplete {
+    @apply px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-400 border border-slate-600;
+  }
+}

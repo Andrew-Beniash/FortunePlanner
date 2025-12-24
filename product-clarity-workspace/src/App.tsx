@@ -6,16 +6,16 @@ function App() {
   const sessionId = useSessionStore((state) => state.sessionId)
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col md:flex-row font-sans">
+    <div className="h-screen w-screen bg-slate-900 text-slate-100 flex flex-col md:flex-row font-sans overflow-hidden">
       {/* Proof of state integration - normally this might be in a header or debug panel */}
-      <div className="fixed top-0 right-0 p-2 text-xs text-slate-600 pointer-events-none">
-        Session: {sessionId}
+      <div className="fixed top-2 right-2 z-50 px-2 py-1 bg-slate-800/80 rounded border border-slate-700 text-[10px] text-slate-500 pointer-events-none">
+        Session: {sessionId?.slice(0, 8)}...
       </div>
 
-      <div className="w-full md:w-1/2 h-[50vh] md:h-screen border-b md:border-b-0 md:border-r border-slate-700 overflow-y-auto">
+      <div className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r border-slate-700">
         <GuidedInterviewPanel />
       </div>
-      <div className="w-full md:w-1/2 h-[50vh] md:h-screen overflow-y-auto">
+      <div className="w-full md:w-1/2 h-[50vh] md:h-full">
         <DocumentationPreviewPanel />
       </div>
     </div>
