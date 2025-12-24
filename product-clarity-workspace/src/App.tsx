@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { useSessionStore } from './state/sessionStore'
-import { GuidedInterviewPanel } from './components/interview'
-import { DocumentationPreviewPanel } from './components/preview'
+import GuidedInterviewPanel from './components/interview/GuidedInterviewPanel'
+import DocumentationPreviewPanel from './components/preview/DocumentationPreviewPanel'
+import AppHeader from './components/layout/AppHeader'
 
 function App() {
-  const sessionId = useSessionStore((state) => state.sessionId)
   const saveActiveSession = useSessionStore((state) => state.saveActiveSession)
 
   // Auto-save loop (10s) + save on exit
@@ -26,17 +26,21 @@ function App() {
   }, [saveActiveSession])
 
   return (
-    <div className="h-screen w-screen bg-slate-900 text-slate-100 flex flex-col md:flex-row font-sans overflow-hidden">
-      {/* Proof of state integration - normally this might be in a header or debug panel */}
-      <div className="fixed top-2 right-2 z-50 px-2 py-1 bg-slate-800/80 rounded border border-slate-700 text-[10px] text-slate-500 pointer-events-none">
-        Session: {sessionId?.slice(0, 8)}...
-      </div>
+    <div className="h-screen w-screen bg-slate-900 text-slate-100 flex flex-col font-sans overflow-hidden">
+      {/* App Header */}
+      <AppHeader />
 
-      <div className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r border-slate-700">
-        <GuidedInterviewPanel />
-      </div>
-      <div className="w-full md:w-1/2 h-[50vh] md:h-full">
-        <DocumentationPreviewPanel />
+      {/* Main Content: Two Panels */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* Left: Guided Interview */}
+        <div className="w-full md:w-1/2 h-1/2 md:h-full border-r border-slate-700 overflow-hidden">
+          <GuidedInterviewPanel />
+        </div>
+
+        {/* Right: Documentation Preview */}
+        <div className="w-full md:w-1/2 h-1/2 md:h-full overflow-hidden">
+          <DocumentationPreviewPanel />
+        </div>
       </div>
     </div>
   )

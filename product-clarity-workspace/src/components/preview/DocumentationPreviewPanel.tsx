@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSessionStore } from '../../state/sessionStore'
 import { renderPreview, type PreviewSection } from '../../templates/previewRenderer'
 import { renderExport } from '../../templates/exportRenderer'
+import { loadOutputs, getDefaultOutputId, type OutputFileConfig } from '../../config/outputs'
 
 export default function DocumentationPreviewPanel() {
   // Global State
@@ -23,13 +24,26 @@ export default function DocumentationPreviewPanel() {
   const [isExporting, setIsExporting] = useState(false)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: any } | null>(null)
 
-  // Trigger Generation on relevant state changes
+  // Output selection state
+  const [availableOutputs, setAvailableOutputs] = useState<OutputFileConfig[]>([])
+  const [selectedOutputId, setSelectedOutputId] = useState<string>(getDefaultOutputId())
+
+  // Load available outputs on mount
+  useEffect(() => {
+    async function loadAvailableOutputs() {
+      const outputs = await loadOutputs()
+      setAvailableOutputs(outputs)
+    }
+    loadAvailableOutputs()
+  }, [])
+
+  // Regenerate when session or output selection changes
   useEffect(() => {
     let mounted = true
 
     async function updatePreview() {
       setIsGenerating(true)
-      const newSections = await renderPreview(sessionState)
+      const newSections = await renderPreview(sessionState, selectedOutputId)
       if (mounted) {
         setSections(newSections)
         setIsGenerating(false)
@@ -40,11 +54,11 @@ export default function DocumentationPreviewPanel() {
 
     return () => { mounted = false }
   }, [
-    // Dependencies that should trigger re-render
     sessionState.rawAnswers,
     sessionState.userOverrides,
     sessionState.derivedInferences,
-    sessionState.outputLanguage
+    sessionState.outputLanguage,
+    selectedOutputId
   ])
 
   // --- Handlers ---
@@ -77,7 +91,17 @@ export default function DocumentationPreviewPanel() {
   const handleExport = async (format: 'md' | 'docx' | 'pdf') => {
     try {
       setIsExporting(true)
-      const output = await renderExport(sessionState, format)
+      const output = await renderExport(sessionState, format, selectedOutputId)
+
+      // Find selected output config for filename
+      const outputConfig = availableOutputs.find(o => o.id === selectedOutputId)
+      let filename = `document-${sessionState.sessionId}.${format}`
+
+      if (outputConfig?.fileNamePattern) {
+        filename = outputConfig.fileNamePattern
+          .replace('{sessionId}', sessionState.sessionId)
+          .replace('{ext}', format)
+      }
 
       if (typeof output === 'string') {
         // Markdown download
@@ -85,18 +109,18 @@ export default function DocumentationPreviewPanel() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `product-brief-${sessionState.sessionId.substring(0, 8)}.${format}`
+        a.download = filename
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
       } else {
-        // Blob download (PDF/DOCX) - placeholder for now as logic in exportRenderer returns string always in v1
+        // Blob download (PDF/DOCX)
         const blob = output as Blob
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `product-brief-${sessionState.sessionId.substring(0, 8)}.${format}`
+        a.download = filename
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -150,6 +174,25 @@ export default function DocumentationPreviewPanel() {
             <div className="absolute right-0 mt-1 w-32 bg-white rounded shadow-lg overflow-hidden hidden group-hover:block z-20">
               <button onClick={() => setOutputLanguage('en')} className={`block w-full text-left px-4 py-2 text-sm hover:bg-slate-100 ${outputLanguage === 'en' ? 'font-bold bg-blue-50 text-blue-600' : 'text-slate-700'}`}>English</button>
               <button onClick={() => setOutputLanguage('es')} className={`block w-full text-left px-4 py-2 text-sm hover:bg-slate-100 ${outputLanguage === 'es' ? 'font-bold bg-blue-50 text-blue-600' : 'text-slate-700'}`}>Español</button>
+            </div>
+          </div>
+
+          {/* Output Type Selector */}
+          <div className="relative group">
+            <button className="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded flex items-center space-x-1 border border-slate-600">
+              <span>{availableOutputs.find(o => o.id === selectedOutputId)?.label || 'Product Brief'}</span>
+              <span>▼</span>
+            </button>
+            <div className="absolute right-0 mt-1 w-48 bg-white rounded shadow-lg overflow-hidden hidden group-hover:block z-20">
+              {availableOutputs.map(output => (
+                <button
+                  key={output.id}
+                  onClick={() => setSelectedOutputId(output.id)}
+                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-slate-100 ${selectedOutputId === output.id ? 'font-bold bg-blue-50 text-blue-600' : 'text-slate-700'}`}
+                >
+                  {output.label}
+                </button>
+              ))}
             </div>
           </div>
 

@@ -37,24 +37,40 @@ export interface DocumentContext {
   documentTitle: string
   session: {
     sessionId: string
-    blueprintId: string
+    blueprintId?: string
     blueprintVersion: string
     timestamp: string
   }
   rawAnswers: Record<string, any> // Simplified for flexibility in template
   derivedInferences: any // Will match AnalysisSummary.inferences
+  gaps?: any[]
+  completionBySection?: any
+  generatedAt: string
   outputLanguage?: string
 }
 
 export interface ExportMetadata {
   sessionId: string
-  blueprintId: string
   blueprintVersion: string
-  questionLibraryVersion?: string
-  timestamp: string
-  completionPercentage: number
-  assumptions: string[]
-  outputLanguage?: string
+  exportedAt: string
+  sections: string[]
+  analysisResults: {
+    painPoints: number
+    personas: number
+    marketSegments: number
+  }
+  outputLanguage: string
+}
+
+export interface OutputFileConfig {
+  id: string
+  label: string
+  description?: string
+  formats: ('md' | 'docx' | 'pdf')[]
+  templateId: string
+  sections?: string[]
+  analyzers?: string[]
+  fileNamePattern?: string
 }
 
 export interface Section {

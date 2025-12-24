@@ -1,0 +1,48 @@
+[
+  {
+    "id": "product-brief",
+    "label": "Product Brief",
+    "description": "Complete product documentation with all sections",
+    "formats": [
+      "md",
+      "docx",
+      "pdf"
+    ],
+    "templateId": "product-brief-v1",
+    "fileNamePattern": "product-brief-{sessionId}.{ext}"
+  },
+  {
+    "id": "personas-report",
+    "label": "Personas Report",
+    "description": "Detailed user personas and target audience analysis",
+    "formats": [
+      "md",
+      "pdf"
+    ],
+    "templateId": "personas-v1",
+    "sections": [
+      "target-audience"
+    ],
+    "analyzers": [
+      "personaAnalyzer"
+    ],
+    "fileNamePattern": "personas-{sessionId}.{ext}"
+  },
+  {
+    "id": "market-sizing",
+    "label": "Market Sizing",
+    "description": "Market opportunity and sizing analysis",
+    "formats": [
+      "md",
+      "pdf"
+    ],
+    "templateId": "market-sizing-v1",
+    "sections": [
+      "market-opportunity"
+    ],
+    "analyzers": [
+      "marketSizingAnalyzer"
+    ],
+    "fileNamePattern": "market-sizing-{sessionId}.{ext}"
+  }
+]

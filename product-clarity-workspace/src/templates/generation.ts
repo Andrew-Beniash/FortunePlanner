@@ -3,44 +3,57 @@ import { runAnalysis } from '../engine/analysisEngine'
 import { loadTemplateBody, getTemplateForLanguage } from './templates'
 import { compileTemplate } from './handlebarsEngine'
 import { translateHtml } from '../engine/translation'
-import type { DocumentContext } from '../config/types'
+import type { DocumentContext, OutputFileConfig } from '../config/types'
 import { startTimer, endTimer } from '../utils/perfMonitor'
+import { getOutputById, getDefaultOutputId } from '../config/outputs'
 
 // Map Session to DocumentContext
 function buildContext(session: SessionState, analysisResults: any): DocumentContext {
-  // Simplify rawAnswers for template consumption: { q1: "my value", q2: ... }
-  const answers: Record<string, any> = {}
-  for (const [key, val] of Object.entries(session.rawAnswers)) {
-    answers[key] = val?.value
-  }
-
   return {
-    documentTitle: 'Product Clarity Document', // Could come from answers
     session: {
       sessionId: session.sessionId,
-      blueprintId: session.blueprintId || 'unknown',
       blueprintVersion: session.blueprintVersion,
-      timestamp: new Date().toISOString()
+      timestamp: session.timestamp
     },
-    rawAnswers: answers,
+    rawAnswers: session.rawAnswers,
     derivedInferences: analysisResults.inferences,
-    outputLanguage: session.outputLanguage // Add for template usage
+    gaps: analysisResults.gaps,
+    completionBySection: session.completionBySection,
+    documentTitle: 'Product Clarity Brief',
+    generatedAt: new Date().toISOString(),
+    outputLanguage: session.outputLanguage
   }
 }
-
-import type { ExportMetadata } from '../config/types'
 
 export interface GeneratedOutput {
   html: string
   templateId: string
-  metadata: ExportMetadata
+  outputId: string
+  metadata: any
 }
 
-export async function generateOutput(session: SessionState, templateId: string = 'product-brief-v1'): Promise<GeneratedOutput> {
+export async function generateOutput(
+  session: SessionState,
+  outputIdOrConfig?: string | OutputFileConfig
+): Promise<GeneratedOutput> {
   startTimer('generateOutput')
 
-  // 0. Null check
-  if (!templateId) throw new Error('Template ID is required')
+  // Resolve output config
+  let outputConfig: OutputFileConfig
+  if (typeof outputIdOrConfig === 'string') {
+    const config = await getOutputById(outputIdOrConfig)
+    if (!config) throw new Error(`Output not found: ${outputIdOrConfig}`)
+    outputConfig = config
+  } else if (outputIdOrConfig) {
+    outputConfig = outputIdOrConfig
+  } else {
+    const defaultId = getDefaultOutputId()
+    const config = await getOutputById(defaultId)
+    if (!config) throw new Error(`Default output not found: ${defaultId}`)
+    outputConfig = config
+  }
+
+  const templateId = outputConfig.templateId
 
   // 1. Run Analysis (fresh)
   const analysis = await runAnalysis(session)
@@ -77,15 +90,16 @@ export async function generateOutput(session: SessionState, templateId: string =
   }
 
   // 5. Construct Metadata
-  const completionPercentage = session.completionBySection['general']?.completeness || 0
-
-  const metadata: ExportMetadata = {
+  const metadata = {
     sessionId: session.sessionId,
-    blueprintId: session.blueprintId || 'unknown',
     blueprintVersion: session.blueprintVersion,
-    timestamp: new Date().toISOString(),
-    completionPercentage,
-    assumptions: session.derivedInferences.assumptions || [], // Ensure fallback
+    exportedAt: new Date().toISOString(),
+    sections: outputConfig.sections || [],
+    analysisResults: {
+      painPoints: analysis.inferences.painPoints.length,
+      personas: analysis.inferences.personas.length,
+      marketSegments: analysis.inferences.marketSizing.length
+    },
     outputLanguage: session.outputLanguage
   }
 
@@ -94,6 +108,7 @@ export async function generateOutput(session: SessionState, templateId: string =
   return {
     html,
     templateId,
+    outputId: outputConfig.id,
     metadata
   }
 }

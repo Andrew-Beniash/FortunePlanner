@@ -93,6 +93,17 @@ export interface SessionState {
   setUserOverride: (sectionId: string, override: UserOverride) => void
   resetUserOverride: (sectionId: string) => void
   setOutputLanguage: (lang: string) => void
+
+  /**
+   * Reset the session to default state
+   * Creates a fresh session with:
+   * - New session ID
+   * - Empty answers and overrides
+   * - Cleared derived inferences
+   * - Reset to first blueprint (auto-loaded)
+   * - Interview not completed
+   */
+  resetSessionToDefault: () => void
   completeInterview: () => void
 
   // Validation / Computed
@@ -363,9 +374,45 @@ export const useSessionStore = create<SessionState>((set, get) => {
       })
     },
 
-    setOutputLanguage: (lang) => {
+    setOutputLanguage: (lang: string) => {
       const now = new Date().toISOString()
       set({ outputLanguage: lang, lastModifiedAt: now })
+    },
+
+    /**
+     * Reset session to default state
+     * Clears all answers, overrides, and derived data
+     * Creates a new session and resets interview flow
+     */
+    resetSessionToDefault: () => {
+      const now = new Date().toISOString()
+      const newSessionId = crypto.randomUUID()
+
+      set({
+        sessionId: newSessionId,
+        blueprintId: null,
+        currentQuestionId: null,
+        completedQuestionIds: [],
+        rawAnswers: {},
+        userOverrides: {},
+        derivedInferences: {
+          painPoints: [],
+          personas: [],
+          marketSizing: [],
+          viability: [],
+          risks: [],
+          assumptions: []
+        },
+        gaps: [],
+        contradictions: [],
+        completionBySection: {},
+        outputLanguage: 'en',
+        isInterviewComplete: false,
+        completedAt: null,
+        timestamp: now,
+        lastModifiedAt: now,
+        lastSavedAt: null
+      })
     },
 
     completeInterview: () => {

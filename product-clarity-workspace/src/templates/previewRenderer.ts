@@ -1,18 +1,24 @@
 import type { SessionState } from '../state/sessionStore'
 import { generateOutput } from './generation'
+import { getDefaultOutputId } from '../config/outputs'
 
 export interface PreviewSection {
   id: string
   title: string
-  html: string
-  status: 'complete' | 'incomplete' | 'needsReview'
+  html: string  // Rendered content with potential overrides
   isEdited: boolean
 }
 
-export async function renderPreview(session: SessionState): Promise<PreviewSection[]> {
+export async function renderPreview(
+  session: SessionState,
+  outputId?: string
+): Promise<PreviewSection[]> {
   try {
-    // Generate full document HTML
-    const { html } = await generateOutput(session, 'product-brief-v1')
+    // Use provided outputId or default
+    const actualOutputId = outputId || getDefaultOutputId()
+
+    // Generate with output config
+    const { html } = await generateOutput(session, actualOutputId)
 
     // Check for overrides on the "full-doc" section (since we only have one right now)
     const sectionId = 'full-doc'
@@ -23,7 +29,6 @@ export async function renderPreview(session: SessionState): Promise<PreviewSecti
         id: sectionId,
         title: 'Product Clarity Brief',
         html: override ? override.editedText : html,
-        status: 'complete', // TODO: derive from session.completionBySection
         isEdited: !!override
       }
     ]
@@ -34,7 +39,6 @@ export async function renderPreview(session: SessionState): Promise<PreviewSecti
         id: 'error',
         title: 'Error',
         html: `<div class="error">Failed to generate preview: ${(err as Error).message}</div>`,
-        status: 'incomplete',
         isEdited: false
       }
     ]

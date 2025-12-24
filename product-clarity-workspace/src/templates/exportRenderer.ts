@@ -1,64 +1,77 @@
 import type { SessionState } from '../state/sessionStore'
-import { generateOutput } from './generation'
+import { generateOutput, type GeneratedOutput } from './generation'
+import { startTimer, endTimer } from '../utils/perfMonitor'
+import { getOutputById, getDefaultOutputId } from '../config/outputs'
 
-export async function renderExport(session: SessionState, format: 'md' | 'docx' | 'pdf'): Promise<string | Blob> {
+// Minimal Markdown conversion (placeholder)
+function convertHtmlToMarkdown(html: string, metadata: any): string {
+  const frontmatter = `---
+title: ${metadata.documentTitle || 'Product Brief'}
+sessionId: ${metadata.sessionId}
+generated: ${metadata.exportedAt}
+outputLanguage: ${metadata.outputLanguage}
+---
+
+`
+  // Very basic HTML to Markdown (real implementation would use a library like turndown)
+  let markdown = html
+    .replace(/<h1>(.*?)<\/h1>/g, '# $1\n')
+    .replace(/<h2>(.*?)<\/h2>/g, '## $1\n')
+    .replace(/<h3>(.*?)<\/h3>/g, '### $1\n')
+    .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+    .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+    .replace(/<em>(.*?)<\/em>/g, '*$1*')
+    .replace(/<li>(.*?)<\/li>/g, '- $1\n')
+    .replace(/<[^>]+>/g, '') // Strip remaining tags
+
+  return frontmatter + markdown
+}
+
+export async function renderExport(
+  session: SessionState,
+  format: 'md' | 'docx' | 'pdf',
+  outputId?: string
+): Promise<string | Blob> {
+  const actualOutputId = outputId || getDefaultOutputId()
+  startTimer(`export-${format}`)
+
   try {
-    const { html, metadata } = await generateOutput(session, 'product-brief-v1')
+    // Load output config and validate format
+    const outputConfig = await getOutputById(actualOutputId)
+    if (!outputConfig) {
+      throw new Error(`Output configuration not found: ${actualOutputId}`)
+    }
 
-    // Check for overrides on the full doc
-    const sectionId = 'full-doc'
-    const override = session.userOverrides[sectionId]
+    if (!outputConfig.formats.includes(format)) {
+      throw new Error(`Format '${format}' not supported for output '${outputConfig.label}'`)
+    }
+
+    // Generate base content with metadata
+    const { html, metadata } = await generateOutput(session, outputConfig)
+
+    // Apply user overrides (prioritize edited content)
+    const override = session.userOverrides['full-document']
     const effectiveHtml = override ? override.editedText : html
 
+    let result: string | Blob
+
     if (format === 'md') {
-      return convertHtmlToMarkdown(effectiveHtml, metadata)
+      result = convertHtmlToMarkdown(effectiveHtml, metadata)
+    } else if (format === 'docx') {
+      // TODO: Implement DOCX generation using library
+      result = effectiveHtml // Placeholder
+    } else if (format === 'pdf') {
+      // TODO: Implement PDF generation using library
+      result = effectiveHtml // Placeholder
+    } else {
+      result = effectiveHtml
     }
 
-    if (format === 'docx') {
-      // TODO: Use 'docx' library. For v1, returning HTML as placeholder until docx builder is implemented
-      // Ideally we parse the HTML into IParagraph, TextRun etc.
-      return effectiveHtml
-    }
-
-    if (format === 'pdf') {
-      // PDF generation happens client-side usually with html2pdf
-      // We return the HTML, and the UI component handles the lib call
-      return effectiveHtml
-    }
-
-    return effectiveHtml
+    endTimer(`export-${format}`)
+    return result
   } catch (err) {
+    endTimer(`export-${format}`)
     console.error('[Export Renderer] Error:', err)
     throw err
   }
-}
-
-function convertHtmlToMarkdown(html: string, metadata: any): string {
-  // Simple naive converter for v1
-  let md = html
-    .replace(/<h1>(.*?)<\/h1>/g, '# $1\n\n')
-    .replace(/<h2>(.*?)<\/h2>/g, '## $1\n\n')
-    .replace(/<h3>(.*?)<\/h3>/g, '### $1\n\n')
-    .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
-    .replace(/<ul>/g, '')
-    .replace(/<\/ul>/g, '')
-    .replace(/<li>(.*?)<\/li>/g, '- $1\n')
-    .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
-    .replace(/<em>(.*?)<\/em>/g, '*$1*')
-    .replace(/<div.*?>/g, '')
-    .replace(/<\/div>/g, '\n')
-    .replace(/<SECTION.*?>/gi, '') // varying casing
-    .replace(/<\/SECTION>/gi, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/<[^>]+>/g, '') // Strip remaining tags
-
-  // Prepend Metadata
-  const frontmatter = `---
-sessionId: ${metadata.sessionId}
-blueprintId: ${metadata.blueprintId}
-timestamp: ${metadata.timestamp}
-completion: ${metadata.completionPercentage}%
----\n\n`
-
-  return frontmatter + md.trim()
 }
