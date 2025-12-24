@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { validateSession } from '../engine/validation'
 
 // --- Domain Types ---
 
@@ -44,7 +45,7 @@ export interface SessionSummary {
 
 // --- State Interface ---
 
-interface SessionState {
+export interface SessionState {
   // Core Session Data
   sessionId: string
   blueprintVersion: string
@@ -314,19 +315,27 @@ export const useSessionStore = create<SessionState>((set, get) => {
       }))
     },
 
-    recomputeValidation: () => {
+    recomputeValidation: async () => {
       const state = get()
-      const totalQuestions = 10;
-      const answeredCount = Object.keys(state.rawAnswers).length;
+      const { gaps, isValid } = await validateSession(state)
+
+      // Calculate simple completion based on gaps vs total fields
+      // This is a simplified heuristic; usually we want explicit questions count
+      // But validateSession already iterates active questions.
+      // Ideally validateSession returns completeness stats too. 
+      // For now, we update Gaps.
+
+      const totalQuestions = 5 // TODO: dynamic from blueprint
+      const validAnswers = totalQuestions - gaps.length // Rough proxy
 
       set({
+        gaps,
         completionBySection: {
           'general': {
-            completeness: Math.min(100, Math.round((answeredCount / totalQuestions) * 100)),
-            clarity: 80
+            completeness: Math.max(0, Math.min(100, Math.round((validAnswers / totalQuestions) * 100))),
+            clarity: isValid ? 90 : 50
           }
         },
-        // Recomputing validation updates derived state, so we mark modified
         lastModifiedAt: new Date().toISOString()
       })
     },

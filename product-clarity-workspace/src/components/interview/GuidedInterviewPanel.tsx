@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useSessionStore } from '../../state/sessionStore'
 import { loadQuestions } from '../../config/questions'
 import { loadBlueprints } from '../../config/blueprints'
+import { validateAnswer } from '../../engine/validation'
 import type { Question, Blueprint } from '../../config/types'
 
 export default function GuidedInterviewPanel() {
@@ -52,6 +53,16 @@ export default function GuidedInterviewPanel() {
   const currentIndex = currentQuestionId ? questionSequence.indexOf(currentQuestionId) : -1
   const currentQuestion = currentQuestionId ? questions[currentQuestionId] : null
   const currentAnswer = currentQuestionId ? rawAnswers[currentQuestionId]?.value : ''
+  const currentRawAnswer = currentQuestionId ? rawAnswers[currentQuestionId] : undefined
+
+  // Validation State
+  const validationErrors = useMemo(() => {
+    if (!currentQuestion) return []
+    return validateAnswer(currentQuestion, currentRawAnswer)
+  }, [currentQuestion, currentRawAnswer])
+
+  const isValid = validationErrors.length === 0
+  const isRequired = currentQuestion?.validationRules?.required
 
   // Progress Calculation
   const totalQuestions = questionSequence.length
@@ -61,7 +72,15 @@ export default function GuidedInterviewPanel() {
   if (isLoading) return <div className="p-8 text-slate-400">Loading interview...</div>
   if (!activeBlueprint || !currentQuestion) return <div className="p-8 text-slate-400">No active question.</div>
 
-  const handleNext = () => goToNextQuestion(questionSequence)
+  const handleNext = () => {
+    // Block if required and invalid (and user has interacted or it's empty)
+    // For smoother UX, we might allow check on click
+    if (!isValid && isRequired) {
+      // Logic to show touched state could go here, for now we rely on explicit errors
+      return
+    }
+    goToNextQuestion(questionSequence)
+  }
   const handleBack = () => goToPreviousQuestion(questionSequence)
   const handleSkip = () => skipCurrentQuestion(questionSequence)
 
@@ -91,9 +110,12 @@ export default function GuidedInterviewPanel() {
         <div className="max-w-2xl mx-auto space-y-8">
 
           <div className="space-y-2">
-            <span className="inline-block px-2 py-1 rounded bg-slate-800 text-xs font-medium text-blue-400 border border-slate-700">
-              {currentQuestion.category}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="inline-block px-2 py-1 rounded bg-slate-800 text-xs font-medium text-blue-400 border border-slate-700">
+                {currentQuestion.category}
+              </span>
+              {isRequired && <span className="text-xs text-red-400 font-medium">Required</span>}
+            </div>
             <h1 className="text-2xl font-bold text-slate-100 leading-tight">
               {currentQuestion.text}
             </h1>
@@ -108,14 +130,16 @@ export default function GuidedInterviewPanel() {
             {/* Input Renderer */}
             {currentQuestion.inputType === 'textarea' ? (
               <textarea
-                className="w-full h-40 bg-slate-800 border-slate-600 rounded-lg p-4 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                className={`w-full h-40 bg-slate-800 border rounded-lg p-4 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600 ${validationErrors.length > 0 && currentAnswer ? 'border-red-500 focus:ring-red-500' : 'border-slate-600'
+                  }`}
                 placeholder="Type your answer here..."
                 value={currentAnswer || ''}
                 onChange={(e) => recordAnswer(currentQuestion.id, e.target.value)}
               />
             ) : currentQuestion.inputType === 'select' ? (
               <select
-                className="w-full bg-slate-800 border-slate-600 rounded-lg p-4 text-slate-200 focus:ring-2 focus:ring-blue-500"
+                className={`w-full bg-slate-800 border rounded-lg p-4 text-slate-200 focus:ring-2 focus:ring-blue-500 ${validationErrors.length > 0 && currentAnswer ? 'border-red-500 focus:ring-red-500' : 'border-slate-600'
+                  }`}
                 value={currentAnswer || ''}
                 onChange={(e) => recordAnswer(currentQuestion.id, e.target.value)}
               >
@@ -126,12 +150,26 @@ export default function GuidedInterviewPanel() {
               </select>
             ) : (
               <input
-                type="text"
-                className="w-full bg-slate-800 border-slate-600 rounded-lg p-4 text-slate-200 focus:ring-2 focus:ring-blue-500 placeholder:text-slate-600"
+                type={currentQuestion.inputType === 'number' ? 'number' : 'text'}
+                className={`w-full bg-slate-800 border rounded-lg p-4 text-slate-200 focus:ring-2 focus:ring-blue-500 placeholder:text-slate-600 ${validationErrors.length > 0 && currentAnswer ? 'border-red-500 focus:ring-red-500' : 'border-slate-600'
+                  }`}
                 placeholder="Type your answer here..."
                 value={currentAnswer || ''}
                 onChange={(e) => recordAnswer(currentQuestion.id, e.target.value)}
+                min={currentQuestion.validationRules?.min}
+                max={currentQuestion.validationRules?.max}
               />
+            )}
+
+            {/* Validation Feedback */}
+            {validationErrors.length > 0 && currentAnswer && (
+              <div className="space-y-1">
+                {validationErrors.map((err, i) => (
+                  <div key={i} className="text-sm text-red-400 flex items-center">
+                    <span className="mr-1">⚠</span> {err.message}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
@@ -161,7 +199,11 @@ export default function GuidedInterviewPanel() {
             </button>
             <button
               onClick={handleNext}
-              className="px-6 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all transform active:scale-95"
+              disabled={isRequired && !isValid}
+              className={`px-6 py-2 rounded-lg text-sm font-bold shadow-lg transition-all transform active:scale-95 ${isRequired && !isValid
+                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none'
+                  : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20'
+                }`}
             >
               {isLast ? 'Finish' : 'Next →'}
             </button>
