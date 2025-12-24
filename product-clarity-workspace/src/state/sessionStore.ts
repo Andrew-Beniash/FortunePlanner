@@ -9,13 +9,14 @@ export interface RawAnswer {
   timestamp: string // ISO string
 }
 
-import type { PainPoint, Persona } from '../analyzers/types'
+import type { PainPoint, Persona, MarketSizing, ViabilityAssessment } from '../analyzers/types'
 
 export interface DerivedInferences {
   painPoints: PainPoint[]
   personas: Persona[]
-  // ... other inferences
-  risks: any[]
+  marketSizing: MarketSizing[]
+  viability: ViabilityAssessment[]
+  risks: any[] // Legacy/Other risks
   assumptions: any[]
 }
 
@@ -194,6 +195,8 @@ export const useSessionStore = create<SessionState>((set, get) => {
     derivedInferences: persistedState.derivedInferences || {
       painPoints: [],
       personas: [],
+      marketSizing: [],
+      viability: [],
       risks: [],
       assumptions: []
     },

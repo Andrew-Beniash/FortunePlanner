@@ -19,6 +19,27 @@ export interface Persona {
   notes?: string
 }
 
+export interface MarketSizing {
+  id: string
+  segment: string
+  tam?: number
+  sam?: number
+  som?: number
+  currency?: string
+  pricingModel?: string
+  notes?: string
+}
+
+export interface ViabilityAssessment {
+  id: string
+  feasibility: 'low' | 'medium' | 'high'
+  keyConstraints: string[]
+  teamFit?: string
+  timelineRisk?: 'low' | 'medium' | 'high'
+  overallRisk?: 'low' | 'medium' | 'high'
+  notes?: string
+}
+
 export interface Provenance {
   source: 'userInput' | 'template' | 'inference'
   references: string[] // IDs of questions/docs used

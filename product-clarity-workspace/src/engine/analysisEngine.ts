@@ -2,12 +2,16 @@ import type { SessionState } from '../state/sessionStore'
 import { normalizeAnswers } from './normalize'
 import { runPainPointAnalyzer } from '../analyzers/painPointAnalyzer'
 import { runPersonaAnalyzer } from '../analyzers/personaAnalyzer'
-import type { PainPoint, Persona } from '../analyzers/types'
+import { runMarketSizingAnalyzer } from '../analyzers/marketSizingAnalyzer'
+import { runViabilityAnalyzer } from '../analyzers/viabilityAnalyzer'
+import type { PainPoint, Persona, MarketSizing, ViabilityAssessment } from '../analyzers/types'
 
 export interface AnalysisSummary {
   inferences: {
     painPoints: PainPoint[]
     personas: Persona[]
+    marketSizing: MarketSizing[]
+    viability: ViabilityAssessment[]
   }
   gaps: any[]
   contradictions: any[]
@@ -17,9 +21,11 @@ export async function runAnalysis(session: SessionState): Promise<AnalysisSummar
   const normalized = normalizeAnswers(session.rawAnswers) // Keeping for now to avoid unused var
 
   // Run Analyzers Parallelly
-  const [ppResult, personaResult] = await Promise.all([
+  const [ppResult, personaResult, marketResult, viabilityResult] = await Promise.all([
     runPainPointAnalyzer(session),
-    runPersonaAnalyzer(session)
+    runPersonaAnalyzer(session),
+    runMarketSizingAnalyzer(session),
+    runViabilityAnalyzer(session)
   ])
 
   // Extract Data
@@ -31,10 +37,20 @@ export async function runAnalysis(session: SessionState): Promise<AnalysisSummar
     .filter(o => o.type === 'persona')
     .map(o => o.data as Persona)
 
+  const marketSizing = marketResult.outputs
+    .filter(o => o.type === 'marketSizing')
+    .map(o => o.data as MarketSizing)
+
+  const viability = viabilityResult.outputs
+    .filter(o => o.type === 'viabilityAssessment')
+    .map(o => o.data as ViabilityAssessment)
+
   return {
     inferences: {
       painPoints,
-      personas
+      personas,
+      marketSizing,
+      viability
     },
     gaps: [],
     contradictions: []
