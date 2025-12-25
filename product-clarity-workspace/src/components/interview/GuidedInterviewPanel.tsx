@@ -82,6 +82,7 @@ export default function GuidedInterviewPanel() {
   if (!activeBlueprint || !currentQuestion) return <div className="p-8 text-slate-400">No active question.</div>
 
   const handleNext = async () => {
+    if (!currentQuestion) return
 
     if (isRequired && !isValid) {
       alert('This question is required. Please provide a valid answer.')
