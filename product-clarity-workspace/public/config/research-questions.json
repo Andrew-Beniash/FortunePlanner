@@ -1,0 +1,57 @@
+[
+  {
+    "id": "viability_feasibility_step1",
+    "area": "viability",
+    "label": "Feasibility Assessment",
+    "description": "Evaluate technical and operational feasibility of the proposed solution",
+    "promptTemplate": "You are a feasibility expert. Analyze the following product idea and assess its feasibility.\n\nProblem: {{fromAnswers.problem-statement}}\nSolution: {{fromAnswers.solution-description}}\nTeam Size: {{fromAnswers.team-size}}\nTimeline: {{fromAnswers.timeline}}\nBudget: {{fromAnswers.budget}}\n\nProvide a structured assessment of:\n1. Technical feasibility (can it be built?)\n2. Operational feasibility (can it be executed?)\n3. Key constraints that limit feasibility\n4. Recommended next steps\n\nReturn JSON with: { feasibility: 'low'|'medium'|'high', constraints: string[], recommendations: string[] }",
+    "inputSources": {
+      "fromAnswers": [
+        "problem-statement",
+        "solution-description",
+        "team-size",
+        "timeline",
+        "budget"
+      ]
+    },
+    "outputKey": "viabilityFeasibility",
+    "priority": "high"
+  },
+  {
+    "id": "viability_risk_step2",
+    "area": "viability",
+    "label": "Risk Assessment",
+    "description": "Identify key risks and unknowns that could impact success",
+    "promptTemplate": "You are a risk assessment expert. Given the feasibility analysis and product details, identify key risks.\n\nFeasibility Analysis: {{fromResearch.viability_feasibility_step1}}\nSolution: {{fromAnswers.solution-description}}\nTarget Market: {{fromAnswers.target-market}}\n\nIdentify:\n1. Technical risks\n2. Market risks\n3. Execution risks\n4. Mitigation strategies\n\nReturn JSON with: { overallRisk: 'low'|'medium'|'high', risks: [{ type: string, description: string, mitigation: string }] }",
+    "inputSources": {
+      "fromAnswers": [
+        "solution-description",
+        "target-market"
+      ],
+      "fromResearch": [
+        "viability_feasibility_step1"
+      ]
+    },
+    "outputKey": "viabilityRisk",
+    "dependsOn": [
+      "viability_feasibility_step1"
+    ],
+    "priority": "high"
+  },
+  {
+    "id": "market_opportunity_analysis",
+    "area": "market",
+    "label": "Market Opportunity Analysis",
+    "description": "Analyze market size and opportunity",
+    "promptTemplate": "You are a market analysis expert. Assess the market opportunity for this product.\n\nProblem: {{fromAnswers.problem-statement}}\nTarget Market: {{fromAnswers.target-market}}\nCompetitive Advantage: {{fromAnswers.competitive-advantage}}\n\nAnalyze:\n1. Market size (TAM/SAM/SOM if possible)\n2. Market trends\n3. Competitive landscape\n4. Market entry barriers\n\nReturn JSON with: { marketSize: string, trends: string[], competitiveLandscape: string, barriers: string[] }",
+    "inputSources": {
+      "fromAnswers": [
+        "problem-statement",
+        "target-market",
+        "competitive-advantage"
+      ]
+    },
+    "outputKey": "marketOpportunity",
+    "priority": "medium"
+  }
+]

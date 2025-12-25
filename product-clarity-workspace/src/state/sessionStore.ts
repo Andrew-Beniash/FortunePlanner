@@ -9,6 +9,7 @@ export interface RawAnswer {
 }
 
 import type { PainPoint, Persona, MarketSizing, ViabilityAssessment } from '../analyzers/types'
+import type { ResearchAnswer } from '../config/types'
 
 export interface DerivedInferences {
   painPoints: PainPoint[]
@@ -81,6 +82,9 @@ export interface SessionState {
   gaps: Gap[]
   contradictions: Contradiction[]
 
+  // Research Answers (Multi-step OpenAI Analysis)
+  researchAnswers: Record<string, ResearchAnswer>
+
   // UI Helpers
   completionBySection: Record<string, { completeness: number; clarity: number }>
 
@@ -110,6 +114,10 @@ export interface SessionState {
   resetSessionToDefault: () => void
   runFullAnalysis: () => Promise<void>
   completeInterview: () => void
+
+  // Research Answer Actions
+  setResearchAnswer: (answer: ResearchAnswer) => void
+  clearResearchAnswersForArea: (area: string) => void
 
   // Validation / Computed
   recomputeValidation: () => void
@@ -236,6 +244,8 @@ export const useSessionStore = create<SessionState>((set, get) => {
     },
     gaps: persistedState.gaps || [],
     contradictions: persistedState.contradictions || [],
+
+    researchAnswers: persistedState.researchAnswers || {},
 
     completionBySection: persistedState.completionBySection || {},
     sessionHistory: persistedState.sessionHistory || []
@@ -514,6 +524,26 @@ export const useSessionStore = create<SessionState>((set, get) => {
         // Already logged in persistSession
         // Potential future: set an error flag in state to show UI warning
       }
+    },
+
+    setResearchAnswer: (answer) => {
+      set((state) => ({
+        researchAnswers: {
+          ...state.researchAnswers,
+          [answer.questionId]: answer
+        },
+        lastModifiedAt: new Date().toISOString()
+      }))
+    },
+
+    clearResearchAnswersForArea: (area) => {
+      set((state) => ({
+        researchAnswers: Object.fromEntries(
+          Object.entries(state.researchAnswers)
+            .filter(([id]) => !id.startsWith(`${area}_`))
+        ),
+        lastModifiedAt: new Date().toISOString()
+      }))
     },
 
     saveSessionToHistory: () => {

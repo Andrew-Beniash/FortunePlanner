@@ -87,4 +87,29 @@ export interface Blueprint {
   sections: Section[]
 }
 
+// --- Research Questions (Multi-step OpenAI Analysis) ---
+
+export interface ResearchQuestion {
+  id: string                          // e.g. "viability_feasibility_step1"
+  area: 'viability' | 'market' | 'distribution' | 'risk' | 'general'
+  label: string                       // human-friendly name
+  description?: string                // what this research step is about
+  promptTemplate: string              // Handlebars-style template for OpenAI prompt
+  inputSources: {
+    fromAnswers?: string[]           // questionIds from questions.json / rawAnswers
+    fromInferences?: string[]        // analyzer output types (e.g. "painPoint", "persona")
+    fromResearch?: string[]          // prior researchQuestion ids whose responses feed into this one
+  }
+  outputKey: string                   // key under which this answer will be stored
+  dependsOn?: string[]                // researchQuestion ids that must run first
+  model?: string                      // optional model override
+  priority?: 'low' | 'medium' | 'high'
+}
+
+export interface ResearchAnswer {
+  questionId: string
+  outputKey: string
+  data: any                          // structured JSON from OpenAI
+  timestamp: string
+}
 
